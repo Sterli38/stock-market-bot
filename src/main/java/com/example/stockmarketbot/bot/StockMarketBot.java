@@ -13,6 +13,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class StockMarketBot extends TelegramLongPollingBot {
     private static final String START = "/start";
     private static final String HELP = "/help";
+
     public StockMarketBot(@Value("${stock.market.bot.token}")String botToken) {
         super(botToken);
     }
@@ -24,10 +25,10 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
         String message = update.getMessage().getText();
         Long chatId = update.getMessage().getChatId();
+        String username = update.getMessage().getChat().getUserName();
 
         switch (message) {
             case START -> {
-                String username = update.getMessage().getChat().getUserName();
                 startCommand(chatId, username);
             }
             case HELP ->
