@@ -13,7 +13,7 @@ public class StockMarketServiceTest {
 
     @Test
     public void getBalanceByCurrencyTest() {
-        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("1", "EUR");
+        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("1", "EUR", "egor", "egor");
         Assertions.assertEquals("43.33", stockMarketResponse.getCurrencyBalance());
     }
 }

@@ -18,7 +18,7 @@ import java.util.Map;
 public class StockMarketServiceImpl implements StockMarketService {
     private final RestTemplate restTemplate;
 
-    public StockMarketResponse getBalanceByCurrency(String participantId, Object currency) {
+    public StockMarketResponse getBalanceByCurrency(String participantId, Object currency, String login, String password) {
         String url = "http://localhost:8080/transactional/getBalanceByCurrency"; // Вынести в отдельный файл
         StockMarketResponse stockMarketResponse = new StockMarketResponse();
 
@@ -28,6 +28,7 @@ public class StockMarketServiceImpl implements StockMarketService {
         Map<String, Object> bodyParamMap = new HashMap<>(); // body запроса
         bodyParamMap.put("participant_id", participantId);
         bodyParamMap.put("currency", currency);
+        httpHeaders.setBasicAuth(login, password);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(bodyParamMap, httpHeaders); // сущность
 
