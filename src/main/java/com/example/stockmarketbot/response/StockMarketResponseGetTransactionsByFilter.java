@@ -13,8 +13,8 @@ public class StockMarketResponseGetTransactionsByFilter {
     private String operationType;
     private Date date;
     private String receivedCurrency;
-    private String receivedAmount;
+    private Double receivedAmount;
     private String givenCurrency;
-    private String givenAmount;
+    private Double givenAmount;
     private Double commission;
 }

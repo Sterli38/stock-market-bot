@@ -48,7 +48,7 @@ public class StockMarketServiceImpl implements StockMarketService {
         return stockMarketResponse;
     }
 
-    public List<StockMarketResponseGetTransactionsByFilter> getTransactionsByFilter(String participantId, String login, String password, TransactionFilter transactionFilter) { // Как передавать данные в метод, сначала сделаю по датам
+    public List<StockMarketResponseGetTransactionsByFilter> getTransactionsByFilter(String participantId, String login, String password, TransactionFilter transactionFilter) {
         String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getTransactions";
         StockMarketResponseGetTransactionsByFilter stockMarketResponseGetTransactionsByFilter = new StockMarketResponseGetTransactionsByFilter();
 
@@ -80,7 +80,7 @@ public class StockMarketServiceImpl implements StockMarketService {
             throw new RestClientException(exception.getMessage());// добавить исключение
         }
         if(stockMarketResponseGetTransactionsByFilter == null) {
-            throw new RestClientException("answer from stock market service was not received");
+            throw new RestClientException("answer from stockMarket service was not received");
         }
         return entity1.getBody();
     }
