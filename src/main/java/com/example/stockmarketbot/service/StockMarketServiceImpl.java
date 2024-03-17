@@ -40,10 +40,10 @@ public class StockMarketServiceImpl implements StockMarketService {
         try {
             stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class, bodyParamMap).getBody();
         } catch (RestClientException e) {
-            throw new RestClientException("Error while sending request to StockMarketService");// добавить исключение
+            throw new RestClientException(e.getMessage());// добавить исключение
         }
         if(stockMarketResponse == null) {
-            throw new RestClientException("answer from stock market service was not received");
+            throw new RestClientException("answer from stockMarket service was not received");
         }
         return stockMarketResponse;
     }

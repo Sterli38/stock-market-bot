@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.ParameterizedTypeReference;
@@ -45,8 +47,26 @@ public class StockMarketServiceTest {
 
     @AfterEach
     public void after() {
-        ReflectionTestUtils.setField(stockMarketService, "restTemplate", originalRestTemplate);
-    }
+        ReflectionTestUtils.setField(stockMarketService, "restTemplate", originalRestTemplate);}
+
+    @Test
+    public void getBalanceByCurrencyTest() {
+        String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getBalanceByCurrency";
+
+        StockMarketResponse expectedStockMarketResponse = new StockMarketResponse();
+        expectedStockMarketResponse.setCurrencyBalance("43.33");
+
+        ResponseEntity<StockMarketResponse> responseEntity = new ResponseEntity<>(expectedStockMarketResponse, HttpStatus.OK);
+
+        when(restTemplate.exchange(eq(url), any(), any(), eq(StockMarketResponse.class), anyMap()))
+                .thenReturn(responseEntity);
+
+
+        StockMarketResponse actualResponse = stockMarketService.getBalanceByCurrency("1", "EUR", "egor", "egor");
+
+        Assertions.assertEquals(expectedStockMarketResponse, actualResponse);
+
+        }
 
     @Test
     public void getTransactionsByFilter() {
