@@ -1,5 +1,6 @@
 package com.example.stockmarketbot.service;
 
+import com.example.stockmarketbot.config.ApplicationProperties;
 import com.example.stockmarketbot.response.StockMarketResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
@@ -17,9 +18,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class StockMarketServiceImpl implements StockMarketService {
     private final RestTemplate restTemplate;
+    private final ApplicationProperties applicationProperties;
 
     public StockMarketResponse getBalanceByCurrency(String participantId, Object currency, String login, String password) {
-        String url = "http://localhost:8080/transactional/getBalanceByCurrency"; // Вынести в отдельный файл
+        String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getBalanceByCurrency";
         StockMarketResponse stockMarketResponse = new StockMarketResponse();
 
         HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
@@ -35,10 +37,10 @@ public class StockMarketServiceImpl implements StockMarketService {
         try {
             stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class, bodyParamMap).getBody();
         } catch (RestClientException e) {
-            throw new RestClientException("Error while sending request to WebCurrencyService");// добавить исключение
+            throw new RestClientException(e.getMessage());// добавить исключение
         }
         if(stockMarketResponse == null) {
-            throw new RestClientException("answer from stock market service was not received");
+            throw new RestClientException("answer from stockMarket service was not received");
         }
         return stockMarketResponse;
     }
