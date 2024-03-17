@@ -47,7 +47,8 @@ public class StockMarketServiceTest {
 
     @AfterEach
     public void after() {
-        ReflectionTestUtils.setField(stockMarketService, "restTemplate", originalRestTemplate);}
+        ReflectionTestUtils.setField(stockMarketService, "restTemplate", originalRestTemplate);
+    }
 
     @Test
     public void getBalanceByCurrencyTest() {
