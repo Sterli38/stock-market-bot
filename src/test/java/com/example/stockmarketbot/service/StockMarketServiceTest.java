@@ -1,6 +1,7 @@
 package com.example.stockmarketbot.service;
 
 import com.example.stockmarketbot.config.ApplicationProperties;
+import com.example.stockmarketbot.response.StockMarketResponse;
 import com.example.stockmarketbot.response.StockMarketResponseGetTransactionsByFilter;
 import com.example.stockmarketbot.util.TransactionFilter;
 import org.junit.jupiter.api.AfterEach;
