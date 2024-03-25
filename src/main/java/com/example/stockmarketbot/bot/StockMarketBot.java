@@ -52,8 +52,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
             String username = update.getMessage().getChat().getUserName();
 
             switch (message) {
-                case START -> startCommand(chatId, username);
-                case HELP -> helpCommand(chatId);
+                case START -> handleStartCommand(chatId, username);
+                case HELP -> handleHelpCommand(chatId);
                 case DOCUMENT -> {
                     TransactionFilter transactionFilter = new TransactionFilter();
                     transactionFilter.setOperationType("DEPOSITING");
@@ -61,7 +61,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
                 }
                 case GETBALANCEBYCURRENCY ->
                     getBalanceByCurrency(chatId);
-                default -> unknownCommand(chatId);
+                default -> handleUnknownCommand(chatId);
             }
 
         } else if(update.hasCallbackQuery()) { // Если пользователь нажал на кнопку ( передал id кнопки (CallBackData))
@@ -82,7 +82,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
     }
 
-    public void startCommand(Long chatId, String userName) {
+    public void handleStartCommand(Long chatId, String userName) {
         String text = "Добро пожаловать в stockMarketBot, %s!" +
                 "\nДоступные команды:" +
                 "\n/help - получение справки";
@@ -90,10 +90,15 @@ public class StockMarketBot extends TelegramLongPollingBot {
         sendMessage(chatId, format);
     }
 
-    public void helpCommand(Long chatId) {
+    public void handleHelpCommand(Long chatId) {
         String text = "Доступные команды:" +
                 "\n/start - запуск начального меню" +
                 "\n/help - просмотр доступных команд";
+        sendMessage(chatId, text);
+    }
+
+    public void handleUnknownCommand(Long chatId) {
+        String text = "Неопознанная команда, для просмотра доступных команд воспользуйтесь: /help";
         sendMessage(chatId, text);
     }
 
@@ -128,11 +133,6 @@ public class StockMarketBot extends TelegramLongPollingBot {
 
         }
 
-    }
-
-    public void unknownCommand(Long chatId) {
-        String text = "Неопознанная команда, для просмотра доступных команд воспользуйтесь: /help";
-        sendMessage(chatId, text);
     }
 
     private SendMessage sendMessage(Long chatId, String text) {
