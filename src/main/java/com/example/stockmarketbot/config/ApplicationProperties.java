@@ -11,4 +11,6 @@ import org.springframework.context.annotation.Configuration;
 public class ApplicationProperties {
     @Value("${stock.market.service.url}")
     private String stockMarketServiceUrl;
+    @Value("${stock.market.bot.token}")
+    private String botToken;
 }

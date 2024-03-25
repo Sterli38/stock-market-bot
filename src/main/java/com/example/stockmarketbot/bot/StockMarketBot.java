@@ -1,12 +1,12 @@
 package com.example.stockmarketbot.bot;
 
+import com.example.stockmarketbot.config.ApplicationProperties;
+import com.example.stockmarketbot.integration.stockmarket.request.TransactionFilter;
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
 import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
 import com.example.stockmarketbot.service.StockMarketService;
-import com.example.stockmarketbot.integration.stockmarket.request.TransactionFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -38,8 +38,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
     @Autowired
     private StockMarketService stockMarketService;
 
-    public StockMarketBot(@Value("${stock.market.bot.token}") String botToken) {
-        super(botToken);
+    public StockMarketBot(ApplicationProperties applicationProperties) {
+        super(applicationProperties.getBotToken());
     }
 
     @Override
