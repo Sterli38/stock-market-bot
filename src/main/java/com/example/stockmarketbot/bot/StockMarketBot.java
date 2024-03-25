@@ -1,8 +1,8 @@
 package com.example.stockmarketbot.bot;
 
-import com.example.stockmarketbot.response.StockMarketResponseGetTransactionsByFilter;
+import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
 import com.example.stockmarketbot.service.StockMarketService;
-import com.example.stockmarketbot.util.TransactionFilter;
+import com.example.stockmarketbot.integration.stockmarket.request.TransactionFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -102,8 +102,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
     }
 
-    private InputFile getDoc(List<StockMarketResponseGetTransactionsByFilter> response) {
-        File profileFile = null;
+    private InputFile getDoc(List<GetTransactionsByFilterResponse> response) {
+        File profileFile;
 
         try {
             profileFile = ResourceUtils.getFile("src/main/resources/static/participantTransactions");

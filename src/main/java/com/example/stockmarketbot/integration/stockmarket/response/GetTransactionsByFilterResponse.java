@@ -1,4 +1,4 @@
-package com.example.stockmarketbot.response;
+package com.example.stockmarketbot.integration.stockmarket.response;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Data
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class) // переделать ?
-public class StockMarketResponseGetTransactionsByFilter {
+public class GetTransactionsByFilterResponse {
     private Long id;
     private String operationType;
     private Date date;
