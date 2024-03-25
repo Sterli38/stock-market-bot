@@ -28,7 +28,7 @@ public class StockMarketServiceImpl implements StockMarketService {
     private final ApplicationProperties applicationProperties;
 
     public StockMarketResponse getBalanceByCurrency(String participantId, Object currency, String login, String password) {
-        String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getBalanceByCurrency";
+        String url = getFinalUrl("/transactional/getBalanceByCurrency");
         StockMarketResponse stockMarketResponse = new StockMarketResponse();
 
         HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
@@ -42,7 +42,7 @@ public class StockMarketServiceImpl implements StockMarketService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(bodyParamMap, httpHeaders); // сущность
 
         try {
-            stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class, bodyParamMap).getBody();
+            stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class).getBody();
         } catch (RestClientException e) {
             throw new RestClientException(e.getMessage());// добавить исключение
         }
@@ -53,7 +53,7 @@ public class StockMarketServiceImpl implements StockMarketService {
     }
 
     public List<GetTransactionsByFilterResponse> getTransactionsByFilter(String participantId, String login, String password, TransactionFilter transactionFilter) {
-        String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getTransactions";
+        String url = getFinalUrl("/transactional/getTransactions");
         GetTransactionsByFilterResponse getTransactionsByFilterResponse = new GetTransactionsByFilterResponse();
 
         HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
@@ -78,7 +78,7 @@ public class StockMarketServiceImpl implements StockMarketService {
         ResponseEntity<List<GetTransactionsByFilterResponse>> entity1;
 
         try {
-           entity1 = restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<List<GetTransactionsByFilterResponse>>() {
+           entity1 = restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<>() {
             }, bodyParamMap);
         } catch (RestClientException exception) {
             throw new RestClientException(exception.getMessage());// добавить исключение
@@ -87,5 +87,9 @@ public class StockMarketServiceImpl implements StockMarketService {
             throw new RestClientException("answer from stockMarket service was not received");
         }
         return entity1.getBody();
+    }
+
+    private String getFinalUrl(String endpoint) {
+        return applicationProperties.getStockMarketServiceUrl() + endpoint ;
     }
 }
