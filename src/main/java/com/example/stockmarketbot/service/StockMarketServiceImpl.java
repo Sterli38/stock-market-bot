@@ -1,9 +1,9 @@
 package com.example.stockmarketbot.service;
 
 import com.example.stockmarketbot.config.ApplicationProperties;
-import com.example.stockmarketbot.response.StockMarketResponse;
-import com.example.stockmarketbot.response.StockMarketResponseGetTransactionsByFilter;
-import com.example.stockmarketbot.util.TransactionFilter;
+import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
+import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
+import com.example.stockmarketbot.integration.stockmarket.request.TransactionFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -28,7 +28,7 @@ public class StockMarketServiceImpl implements StockMarketService {
     private final ApplicationProperties applicationProperties;
 
     public StockMarketResponse getBalanceByCurrency(String participantId, Object currency, String login, String password) {
-        String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getBalanceByCurrency";
+        String url = getFinalUrl("/transactional/getBalanceByCurrency");
         StockMarketResponse stockMarketResponse = new StockMarketResponse();
 
         HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
@@ -42,7 +42,7 @@ public class StockMarketServiceImpl implements StockMarketService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(bodyParamMap, httpHeaders); // сущность
 
         try {
-            stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class, bodyParamMap).getBody();
+            stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class).getBody();
         } catch (RestClientException e) {
             throw new RestClientException(e.getMessage());// добавить исключение
         }
@@ -52,9 +52,9 @@ public class StockMarketServiceImpl implements StockMarketService {
         return stockMarketResponse;
     }
 
-    public List<StockMarketResponseGetTransactionsByFilter> getTransactionsByFilter(String participantId, String login, String password, TransactionFilter transactionFilter) {
-        String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getTransactions";
-        StockMarketResponseGetTransactionsByFilter stockMarketResponseGetTransactionsByFilter = new StockMarketResponseGetTransactionsByFilter();
+    public List<GetTransactionsByFilterResponse> getTransactionsByFilter(String participantId, String login, String password, TransactionFilter transactionFilter) {
+        String url = getFinalUrl("/transactional/getTransactions");
+        GetTransactionsByFilterResponse getTransactionsByFilterResponse = new GetTransactionsByFilterResponse();
 
         HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
@@ -75,17 +75,21 @@ public class StockMarketServiceImpl implements StockMarketService {
         httpHeaders.setBasicAuth(login, password);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(bodyParamMap, httpHeaders);
-        ResponseEntity<List<StockMarketResponseGetTransactionsByFilter>> entity1;
+        ResponseEntity<List<GetTransactionsByFilterResponse>> entity1;
 
         try {
-           entity1 = restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<List<StockMarketResponseGetTransactionsByFilter>>() {
+           entity1 = restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<>() {
             }, bodyParamMap);
         } catch (RestClientException exception) {
             throw new RestClientException(exception.getMessage());// добавить исключение
         }
-        if(stockMarketResponseGetTransactionsByFilter == null) {
+        if(getTransactionsByFilterResponse == null) {
             throw new RestClientException("answer from stockMarket service was not received");
         }
         return entity1.getBody();
+    }
+
+    private String getFinalUrl(String endpoint) {
+        return applicationProperties.getStockMarketServiceUrl() + endpoint ;
     }
 }

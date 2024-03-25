@@ -1,9 +1,9 @@
-package com.example.stockmarketbot.util;
+package com.example.stockmarketbot.integration.stockmarket.request;
 
 import lombok.Data;
 
 import java.util.Date;
-import java.util.List;
+import java.util.Set;
 
 @Data
 public class TransactionFilter {
@@ -14,6 +14,6 @@ public class TransactionFilter {
     private Double receivedMaxAmount;
     private Double givenMinAmount;
     private Double givenMaxAmount;
-    private List<String> givenCurrencies;
-    private List<String> receivedCurrencies;
+    private Set<String> givenCurrencies;
+    private Set<String> receivedCurrencies;
 }

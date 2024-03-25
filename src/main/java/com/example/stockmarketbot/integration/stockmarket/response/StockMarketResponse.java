@@ -1,4 +1,4 @@
-package com.example.stockmarketbot.response;
+package com.example.stockmarketbot.integration.stockmarket.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;

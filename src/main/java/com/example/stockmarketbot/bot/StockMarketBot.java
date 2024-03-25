@@ -1,12 +1,12 @@
 package com.example.stockmarketbot.bot;
 
-import com.example.stockmarketbot.response.StockMarketResponse;
-import com.example.stockmarketbot.response.StockMarketResponseGetTransactionsByFilter;
+import com.example.stockmarketbot.config.ApplicationProperties;
+import com.example.stockmarketbot.integration.stockmarket.request.TransactionFilter;
+import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
+import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
 import com.example.stockmarketbot.service.StockMarketService;
-import com.example.stockmarketbot.util.TransactionFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -38,8 +38,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
     @Autowired
     private StockMarketService stockMarketService;
 
-    public StockMarketBot(@Value("${stock.market.bot.token}") String botToken) {
-        super(botToken);
+    public StockMarketBot(ApplicationProperties applicationProperties) {
+        super(applicationProperties.getBotToken());
     }
 
     @Override
@@ -52,8 +52,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
             String username = update.getMessage().getChat().getUserName();
 
             switch (message) {
-                case START -> startCommand(chatId, username);
-                case HELP -> helpCommand(chatId);
+                case START -> handleStartCommand(chatId, username);
+                case HELP -> handleHelpCommand(chatId);
                 case DOCUMENT -> {
                     TransactionFilter transactionFilter = new TransactionFilter();
                     transactionFilter.setOperationType("DEPOSITING");
@@ -61,7 +61,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
                 }
                 case GETBALANCEBYCURRENCY ->
                     getBalanceByCurrency(chatId);
-                default -> unknownCommand(chatId);
+                default -> handleUnknownCommand(chatId);
             }
 
         } else if(update.hasCallbackQuery()) { // Если пользователь нажал на кнопку ( передал id кнопки (CallBackData))
@@ -82,7 +82,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
     }
 
-    public void startCommand(Long chatId, String userName) {
+    public void handleStartCommand(Long chatId, String userName) {
         String text = "Добро пожаловать в stockMarketBot, %s!" +
                 "\nДоступные команды:" +
                 "\n/help - получение справки";
@@ -90,10 +90,15 @@ public class StockMarketBot extends TelegramLongPollingBot {
         sendMessage(chatId, format);
     }
 
-    public void helpCommand(Long chatId) {
+    public void handleHelpCommand(Long chatId) {
         String text = "Доступные команды:" +
                 "\n/start - запуск начального меню" +
                 "\n/help - просмотр доступных команд";
+        sendMessage(chatId, text);
+    }
+
+    public void handleUnknownCommand(Long chatId) {
+        String text = "Неопознанная команда, для просмотра доступных команд воспользуйтесь: /help";
         sendMessage(chatId, text);
     }
 
@@ -130,11 +135,6 @@ public class StockMarketBot extends TelegramLongPollingBot {
 
     }
 
-    public void unknownCommand(Long chatId) {
-        String text = "Неопознанная команда, для просмотра доступных команд воспользуйтесь: /help";
-        sendMessage(chatId, text);
-    }
-
     private SendMessage sendMessage(Long chatId, String text) {
         String chatIdStr = String.valueOf(chatId);
         SendMessage sendMessage = new SendMessage(chatIdStr, text);
@@ -160,8 +160,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
     }
 
-    private InputFile getDoc(List<StockMarketResponseGetTransactionsByFilter> response) {
-        File profileFile = null;
+    private InputFile getDoc(List<GetTransactionsByFilterResponse> response) {
+        File profileFile;
 
         try {
             profileFile = ResourceUtils.getFile("src/main/resources/static/participantTransactions");
