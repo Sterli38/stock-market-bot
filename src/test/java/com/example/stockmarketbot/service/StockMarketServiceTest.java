@@ -1,9 +1,10 @@
 package com.example.stockmarketbot.service;
 
 import com.example.stockmarketbot.config.ApplicationProperties;
-import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
+import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
+import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
-import com.example.stockmarketbot.integration.stockmarket.request.TransactionFilter;
+import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +25,6 @@ import java.util.Date;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -59,11 +59,14 @@ public class StockMarketServiceTest {
 
         ResponseEntity<StockMarketResponse> responseEntity = new ResponseEntity<>(expectedStockMarketResponse, HttpStatus.OK);
 
-        when(restTemplate.exchange(eq(url), any(), any(), eq(StockMarketResponse.class), anyMap()))
+        when(restTemplate.exchange(eq(url), any(), any(), eq(StockMarketResponse.class)))
                 .thenReturn(responseEntity);
 
+        GetBalanceByCurrencyRequest request = new GetBalanceByCurrencyRequest();
+        request.setParticipantId("1");
+        request.setCurrency("EUR");
 
-        StockMarketResponse actualResponse = stockMarketService.getBalanceByCurrency("1", "EUR", "egor", "egor");
+        StockMarketResponse actualResponse = stockMarketService.getBalanceByCurrency("egor", "egor", request);
 
         Assertions.assertEquals(expectedStockMarketResponse, actualResponse);
 
@@ -93,13 +96,13 @@ public class StockMarketServiceTest {
 
         ResponseEntity<List<GetTransactionsByFilterResponse>> entity1 = new ResponseEntity<>(expectedResponse, HttpStatus.OK);
 
-        when(restTemplate.exchange(eq(url), any(), any(), eq(new ParameterizedTypeReference<List<GetTransactionsByFilterResponse>>() {}), anyMap()))
+        when(restTemplate.exchange(eq(url), any(), any(), eq(new ParameterizedTypeReference<List<GetTransactionsByFilterResponse>>() {})))
                 .thenReturn(entity1);
 
-        TransactionFilter transactionFilter = new TransactionFilter();
-        transactionFilter.setOperationType("DEPOSITING");
+        GetTransactionsByFilterRequest request = new GetTransactionsByFilterRequest();
+        request.setOperationType("DEPOSITING");
 
-        List<GetTransactionsByFilterResponse> actualResponse = stockMarketService.getTransactionsByFilter("1", "egor", "egor", transactionFilter);
+        List<GetTransactionsByFilterResponse> actualResponse = stockMarketService.getTransactionsByFilter("egor", "egor",  request);
 
         Assertions.assertEquals(expectedResponse, actualResponse);
     }

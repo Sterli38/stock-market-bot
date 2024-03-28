@@ -1,7 +1,8 @@
 package com.example.stockmarketbot.bot;
 
 import com.example.stockmarketbot.config.ApplicationProperties;
-import com.example.stockmarketbot.integration.stockmarket.request.TransactionFilter;
+import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
+import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
 import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
 import com.example.stockmarketbot.service.StockMarketService;
@@ -55,9 +56,10 @@ public class StockMarketBot extends TelegramLongPollingBot {
                 case START -> handleStartCommand(chatId, username);
                 case HELP -> handleHelpCommand(chatId);
                 case DOCUMENT -> {
-                    TransactionFilter transactionFilter = new TransactionFilter();
-                    transactionFilter.setOperationType("DEPOSITING");
-                    sendDocument(chatId, "Транзакции за что ?", getDoc(stockMarketService.getTransactionsByFilter("1", "egor", "egor", transactionFilter))); // Тут нужно изменить подпись к файлу ( по какому фильтру были получены транзакции), так же нужно по другому передавать login, password и id ( возможно стоит сделать так чтобы у нас был метод авторизации, который будет по логину и паролю ходить в stockMarket и если человек уже зарегистрирован пропускать к возможностям бота, если нет то предлагать регистрацию
+                    GetTransactionsByFilterRequest getTransactionsByFilterRequest = new GetTransactionsByFilterRequest();
+                    getTransactionsByFilterRequest.setParticipantId("1");
+                    getTransactionsByFilterRequest.setOperationType("DEPOSITING");
+                    sendDocument(chatId, "Транзакции за что ?", getDoc(stockMarketService.getTransactionsByFilter( "egor", "egor", getTransactionsByFilterRequest))); // Тут нужно изменить подпись к файлу ( по какому фильтру были получены транзакции), так же нужно по другому передавать login, password и id ( возможно стоит сделать так чтобы у нас был метод авторизации, который будет по логину и паролю ходить в stockMarket и если человек уже зарегистрирован пропускать к возможностям бота, если нет то предлагать регистрацию
                 }
                 case GETBALANCEBYCURRENCY ->
                     getBalanceByCurrency(chatId);
@@ -68,14 +70,17 @@ public class StockMarketBot extends TelegramLongPollingBot {
             String callData = update.getCallbackQuery().getData();
             chatId = update.getCallbackQuery().getMessage().getChatId();
 
+            GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
+            getBalanceByCurrencyRequest.setParticipantId("1");
                 switch (callData) {
                     case EUR -> {
-                   // сделать аутентификацию чтобы id хранился локально ( то есть чтобы мы запрашивали его из кеша бота, предварительно получив после аутентификации)
-                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("1", "EUR", "egor", "egor"); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
+                        getBalanceByCurrencyRequest.setCurrency("EUR");
+                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
                         sendMessage(chatId, "Ваш баланс в EUR: " + stockMarketResponse.getCurrencyBalance());
                     }
                     case RUB -> {
-                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("1", "RUB", "egor", "egor");
+                        getBalanceByCurrencyRequest.setCurrency("RUB");
+                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
                         sendMessage(chatId, "Ваш баланс в RUB: " + stockMarketResponse.getCurrencyBalance()); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
                     }
                 }
