@@ -59,7 +59,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
                     GetTransactionsByFilterRequest getTransactionsByFilterRequest = new GetTransactionsByFilterRequest();
                     getTransactionsByFilterRequest.setParticipantId("1");
                     getTransactionsByFilterRequest.setOperationType("DEPOSITING");
-                    sendDocument(chatId, "Транзакции за что ?", getDoc(stockMarketService.getTransactionsByFilter( "egor", "egor", getTransactionsByFilterRequest))); // Тут нужно изменить подпись к файлу ( по какому фильтру были получены транзакции), так же нужно по другому передавать login, password и id ( возможно стоит сделать так чтобы у нас был метод авторизации, который будет по логину и паролю ходить в stockMarket и если человек уже зарегистрирован пропускать к возможностям бота, если нет то предлагать регистрацию
+                    handleDocumentCommand(chatId, getTransactionsByFilterRequest);
                 }
                 case GETBALANCEBYCURRENCY ->
                     getBalanceByCurrency(chatId);
@@ -93,6 +93,14 @@ public class StockMarketBot extends TelegramLongPollingBot {
                 "\n/help - получение справки";
         String format = String.format(text, userName);
         sendMessage(chatId, format);
+    }
+
+    public void handleDocumentCommand(Long chatId, GetTransactionsByFilterRequest getTransactionsByFilterRequest) {
+        sendDocument(
+                chatId,
+                "Транзакции за что ?",
+                getDoc(stockMarketService.getTransactionsByFilter( "egor", "egor", getTransactionsByFilterRequest))
+        );
     }
 
     public void handleHelpCommand(Long chatId) {
