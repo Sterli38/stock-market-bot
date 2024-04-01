@@ -4,7 +4,7 @@ import com.example.stockmarketbot.config.ApplicationProperties;
 import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
 import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
-import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
+import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByCurrencyResponse;
 import com.example.stockmarketbot.service.StockMarketService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,13 +75,13 @@ public class StockMarketBot extends TelegramLongPollingBot {
                 switch (callData) {
                     case EUR -> {
                         getBalanceByCurrencyRequest.setCurrency("EUR");
-                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
-                        sendMessage(chatId, "Ваш баланс в EUR: " + stockMarketResponse.getCurrencyBalance());
+                        GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
+                        sendMessage(chatId, "Ваш баланс в EUR: " + getBalanceByCurrencyResponse.getCurrencyBalance());
                     }
                     case RUB -> {
                         getBalanceByCurrencyRequest.setCurrency("RUB");
-                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
-                        sendMessage(chatId, "Ваш баланс в RUB: " + stockMarketResponse.getCurrencyBalance()); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
+                        GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
+                        sendMessage(chatId, "Ваш баланс в RUB: " + getBalanceByCurrencyResponse.getCurrencyBalance()); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
                     }
                 }
         }

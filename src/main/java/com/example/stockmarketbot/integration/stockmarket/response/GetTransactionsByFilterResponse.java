@@ -7,7 +7,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class) // переделать ?
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class GetTransactionsByFilterResponse {
     private Long id;
     private String operationType;

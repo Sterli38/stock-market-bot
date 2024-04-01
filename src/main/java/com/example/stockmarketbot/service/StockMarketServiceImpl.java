@@ -4,7 +4,7 @@ import com.example.stockmarketbot.config.ApplicationProperties;
 import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
 import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
-import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
+import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByCurrencyResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -26,9 +26,9 @@ public class StockMarketServiceImpl implements StockMarketService {
     private final RestTemplate restTemplate;
     private final ApplicationProperties applicationProperties;
 
-    public StockMarketResponse getBalanceByCurrency(String login, String password, GetBalanceByCurrencyRequest request) {
+    public GetBalanceByCurrencyResponse getBalanceByCurrency(String login, String password, GetBalanceByCurrencyRequest request) {
         String url = getFinalUrl("/transactional/getBalanceByCurrency");
-        StockMarketResponse stockMarketResponse = new StockMarketResponse();
+        GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = new GetBalanceByCurrencyResponse();
 
         HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON); // устанавливаем тип
@@ -37,14 +37,14 @@ public class StockMarketServiceImpl implements StockMarketService {
         HttpEntity<GetBalanceByCurrencyRequest> entity = new HttpEntity<>(request, httpHeaders); // сущность
 
         try {
-            stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class).getBody();// вынести в метод doGet
+            getBalanceByCurrencyResponse = restTemplate.exchange(url, HttpMethod.GET, entity, GetBalanceByCurrencyResponse.class).getBody();// вынести в метод doGet
         } catch (RestClientException e) {
             throw new RestClientException(e.getMessage());// добавить исключение
         }
-        if(stockMarketResponse == null) {
+        if(getBalanceByCurrencyResponse == null) {
             throw new RestClientException("answer from stockMarket service was not received");
         }
-        return stockMarketResponse;
+        return getBalanceByCurrencyResponse;
     }
 
     public List<GetTransactionsByFilterResponse> getTransactionsByFilter(String login, String password, GetTransactionsByFilterRequest request) {
