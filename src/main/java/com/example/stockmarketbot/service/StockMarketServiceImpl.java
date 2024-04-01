@@ -37,7 +37,7 @@ public class StockMarketServiceImpl implements StockMarketService {
         HttpEntity<GetBalanceByCurrencyRequest> entity = new HttpEntity<>(request, httpHeaders); // сущность
 
         try {
-            stockMarketResponse = doGet(url, HttpMethod.GET, entity).getBody();// вынести в метод doGet
+            stockMarketResponse = restTemplate.exchange(url, HttpMethod.GET, entity, StockMarketResponse.class).getBody();// вынести в метод doGet
         } catch (RestClientException e) {
             throw new RestClientException(e.getMessage());// добавить исключение
         }
@@ -60,7 +60,8 @@ public class StockMarketServiceImpl implements StockMarketService {
         ResponseEntity<List<GetTransactionsByFilterResponse>> entity1;
 
         try {
-           entity1 = doGet(url, HttpMethod.GET, entity, new ParameterizedTypeReference() {});
+           entity1 = restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<>() {
+           });
         } catch (RestClientException exception) {
             throw new RestClientException(exception.getMessage());// добавить исключение
         }
@@ -71,17 +72,7 @@ public class StockMarketServiceImpl implements StockMarketService {
     }
 
     private String getFinalUrl(String endpoint) {
-        return applicationProperties.getStockMarketServiceUrl() + endpoint ;
+        return applicationProperties.getStockMarketServiceUrl() + endpoint;
     }
 
-    private ResponseEntity<StockMarketResponse> doGet(String url, HttpMethod method, HttpEntity entity) {
-        return restTemplate.exchange(url, method, entity, StockMarketResponse.class);
-    }
-
-    private ResponseEntity doGet(String url, HttpMethod method, HttpEntity entity, ParameterizedTypeReference parameterizedTypeReference) {
-        return restTemplate.exchange(url,
-                method,
-                entity,
-                parameterizedTypeReference);
-    }
 }
