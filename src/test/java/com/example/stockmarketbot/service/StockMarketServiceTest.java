@@ -4,7 +4,7 @@ import com.example.stockmarketbot.config.ApplicationProperties;
 import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
 import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
-import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
+import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByCurrencyResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,21 +54,21 @@ public class StockMarketServiceTest {
     public void getBalanceByCurrencyTest() {
         String url = applicationProperties.getStockMarketServiceUrl() + "/transactional/getBalanceByCurrency";
 
-        StockMarketResponse expectedStockMarketResponse = new StockMarketResponse();
-        expectedStockMarketResponse.setCurrencyBalance("43.33");
+        GetBalanceByCurrencyResponse expectedGetBalanceByCurrencyResponse = new GetBalanceByCurrencyResponse();
+        expectedGetBalanceByCurrencyResponse.setCurrencyBalance("43.33");
 
-        ResponseEntity<StockMarketResponse> responseEntity = new ResponseEntity<>(expectedStockMarketResponse, HttpStatus.OK);
+        ResponseEntity<GetBalanceByCurrencyResponse> responseEntity = new ResponseEntity<>(expectedGetBalanceByCurrencyResponse, HttpStatus.OK);
 
-        when(restTemplate.exchange(eq(url), any(), any(), eq(StockMarketResponse.class)))
+        when(restTemplate.exchange(eq(url), any(), any(), eq(GetBalanceByCurrencyResponse.class)))
                 .thenReturn(responseEntity);
 
         GetBalanceByCurrencyRequest request = new GetBalanceByCurrencyRequest();
         request.setParticipantId("1");
         request.setCurrency("EUR");
 
-        StockMarketResponse actualResponse = stockMarketService.getBalanceByCurrency("egor", "egor", request);
+        GetBalanceByCurrencyResponse actualResponse = stockMarketService.getBalanceByCurrency("egor", "egor", request);
 
-        Assertions.assertEquals(expectedStockMarketResponse, actualResponse);
+        Assertions.assertEquals(expectedGetBalanceByCurrencyResponse, actualResponse);
 
         }
 

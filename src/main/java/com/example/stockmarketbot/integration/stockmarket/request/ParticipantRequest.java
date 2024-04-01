@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 
 @Data
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class) // убрать
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ParticipantRequest {
     private String participantId;
 }
