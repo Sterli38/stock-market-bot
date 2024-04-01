@@ -13,15 +13,14 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class StockMarketBotConfiguration {
     @Bean
     public RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-        return restTemplate;
+        return new RestTemplate(new HttpComponentsClientHttpRequestFactory());
     }
 
     @Bean
     public TelegramBotsApi telegramBotsApi(StockMarketBot stockMarketBot) throws TelegramApiException {
-        TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
-        api.registerBot(stockMarketBot);
-        return api;
+        return new TelegramBotsApi(DefaultBotSession.class) {{
+            registerBot(stockMarketBot);
+        }};
     }
 }
 

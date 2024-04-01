@@ -1,12 +1,13 @@
 package com.example.stockmarketbot.bot;
 
-import com.example.stockmarketbot.response.StockMarketResponse;
-import com.example.stockmarketbot.response.StockMarketResponseGetTransactionsByFilter;
+import com.example.stockmarketbot.config.ApplicationProperties;
+import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
+import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
+import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
+import com.example.stockmarketbot.integration.stockmarket.response.StockMarketResponse;
 import com.example.stockmarketbot.service.StockMarketService;
-import com.example.stockmarketbot.util.TransactionFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -38,8 +39,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
     @Autowired
     private StockMarketService stockMarketService;
 
-    public StockMarketBot(@Value("${stock.market.bot.token}") String botToken) {
-        super(botToken);
+    public StockMarketBot(ApplicationProperties applicationProperties) {
+        super(applicationProperties.getBotToken());
     }
 
     @Override
@@ -52,37 +53,41 @@ public class StockMarketBot extends TelegramLongPollingBot {
             String username = update.getMessage().getChat().getUserName();
 
             switch (message) {
-                case START -> startCommand(chatId, username);
-                case HELP -> helpCommand(chatId);
+                case START -> handleStartCommand(chatId, username);
+                case HELP -> handleHelpCommand(chatId);
                 case DOCUMENT -> {
-                    TransactionFilter transactionFilter = new TransactionFilter();
-                    transactionFilter.setOperationType("DEPOSITING");
-                    sendDocument(chatId, "Транзакции за что ?", getDoc(stockMarketService.getTransactionsByFilter("1", "egor", "egor", transactionFilter))); // Тут нужно изменить подпись к файлу ( по какому фильтру были получены транзакции), так же нужно по другому передавать login, password и id ( возможно стоит сделать так чтобы у нас был метод авторизации, который будет по логину и паролю ходить в stockMarket и если человек уже зарегистрирован пропускать к возможностям бота, если нет то предлагать регистрацию
+                    GetTransactionsByFilterRequest getTransactionsByFilterRequest = new GetTransactionsByFilterRequest();
+                    getTransactionsByFilterRequest.setParticipantId("1");
+                    getTransactionsByFilterRequest.setOperationType("DEPOSITING");
+                    sendDocument(chatId, "Транзакции за что ?", getDoc(stockMarketService.getTransactionsByFilter( "egor", "egor", getTransactionsByFilterRequest))); // Тут нужно изменить подпись к файлу ( по какому фильтру были получены транзакции), так же нужно по другому передавать login, password и id ( возможно стоит сделать так чтобы у нас был метод авторизации, который будет по логину и паролю ходить в stockMarket и если человек уже зарегистрирован пропускать к возможностям бота, если нет то предлагать регистрацию
                 }
                 case GETBALANCEBYCURRENCY ->
                     getBalanceByCurrency(chatId);
-                default -> unknownCommand(chatId);
+                default -> handleUnknownCommand(chatId);
             }
 
         } else if(update.hasCallbackQuery()) { // Если пользователь нажал на кнопку ( передал id кнопки (CallBackData))
             String callData = update.getCallbackQuery().getData();
             chatId = update.getCallbackQuery().getMessage().getChatId();
 
+            GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
+            getBalanceByCurrencyRequest.setParticipantId("1");
                 switch (callData) {
                     case EUR -> {
-                   // сделать аутентификацию чтобы id хранился локально ( то есть чтобы мы запрашивали его из кеша бота, предварительно получив после аутентификации)
-                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("1", "EUR", "egor", "egor"); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
+                        getBalanceByCurrencyRequest.setCurrency("EUR");
+                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
                         sendMessage(chatId, "Ваш баланс в EUR: " + stockMarketResponse.getCurrencyBalance());
                     }
                     case RUB -> {
-                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("1", "RUB", "egor", "egor");
+                        getBalanceByCurrencyRequest.setCurrency("RUB");
+                        StockMarketResponse stockMarketResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
                         sendMessage(chatId, "Ваш баланс в RUB: " + stockMarketResponse.getCurrencyBalance()); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
                     }
                 }
         }
     }
 
-    public void startCommand(Long chatId, String userName) {
+    public void handleStartCommand(Long chatId, String userName) {
         String text = "Добро пожаловать в stockMarketBot, %s!" +
                 "\nДоступные команды:" +
                 "\n/help - получение справки";
@@ -90,10 +95,15 @@ public class StockMarketBot extends TelegramLongPollingBot {
         sendMessage(chatId, format);
     }
 
-    public void helpCommand(Long chatId) {
+    public void handleHelpCommand(Long chatId) {
         String text = "Доступные команды:" +
                 "\n/start - запуск начального меню" +
                 "\n/help - просмотр доступных команд";
+        sendMessage(chatId, text);
+    }
+
+    public void handleUnknownCommand(Long chatId) {
+        String text = "Неопознанная команда, для просмотра доступных команд воспользуйтесь: /help";
         sendMessage(chatId, text);
     }
 
@@ -130,11 +140,6 @@ public class StockMarketBot extends TelegramLongPollingBot {
 
     }
 
-    public void unknownCommand(Long chatId) {
-        String text = "Неопознанная команда, для просмотра доступных команд воспользуйтесь: /help";
-        sendMessage(chatId, text);
-    }
-
     private SendMessage sendMessage(Long chatId, String text) {
         String chatIdStr = String.valueOf(chatId);
         SendMessage sendMessage = new SendMessage(chatIdStr, text);
@@ -160,8 +165,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
     }
 
-    private InputFile getDoc(List<StockMarketResponseGetTransactionsByFilter> response) {
-        File profileFile = null;
+    private InputFile getDoc(List<GetTransactionsByFilterResponse> response) {
+        File profileFile;
 
         try {
             profileFile = ResourceUtils.getFile("src/main/resources/static/participantTransactions");
