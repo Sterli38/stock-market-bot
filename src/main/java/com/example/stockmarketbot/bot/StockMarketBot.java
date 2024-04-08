@@ -8,6 +8,7 @@ import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByC
 import com.example.stockmarketbot.service.StockMarketService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -26,18 +27,25 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Component
 public class StockMarketBot extends TelegramLongPollingBot {
     private static final String START = "/start";
     private static final String HELP = "/help";
-    private static final String DOCUMENT = "/document";
+    private static final String GETTRANSACTIONSBYFILTER = "/getTransactionsByFilter";
+    private static final String LANG = "/lang";
     private static final String GETBALANCEBYCURRENCY = "/getBalanceByCurrency";
     private static final String EUR = "EUR";
     private static final String RUB = "RUB"; // вынести
+    private static final String EN = "EN";
+    private static final String RU = "RU";
+    private Locale local = Locale.US;
     @Autowired
     private StockMarketService stockMarketService;
+    @Autowired
+    private MessageSource messageSource;
 
     public StockMarketBot(ApplicationProperties applicationProperties) {
         super(applicationProperties.getBotToken());
@@ -55,68 +63,105 @@ public class StockMarketBot extends TelegramLongPollingBot {
             switch (message) {
                 case START -> handleStartCommand(chatId, username);
                 case HELP -> handleHelpCommand(chatId);
-                case DOCUMENT -> {
+                case LANG -> handleLangCommand(chatId);
+                case GETTRANSACTIONSBYFILTER -> {
                     GetTransactionsByFilterRequest getTransactionsByFilterRequest = new GetTransactionsByFilterRequest();
                     getTransactionsByFilterRequest.setParticipantId("1");
                     getTransactionsByFilterRequest.setOperationType("DEPOSITING");
                     handleDocumentCommand(chatId, getTransactionsByFilterRequest);
                 }
-                case GETBALANCEBYCURRENCY ->
-                    getBalanceByCurrency(chatId);
+                case GETBALANCEBYCURRENCY -> getBalanceByCurrency(chatId);
                 default -> handleUnknownCommand(chatId);
             }
 
-        } else if(update.hasCallbackQuery()) { // Если пользователь нажал на кнопку ( передал id кнопки (CallBackData))
+        } else if (update.hasCallbackQuery()) { // Если пользователь нажал на кнопку ( передал id кнопки (CallBackData))
             String callData = update.getCallbackQuery().getData();
             chatId = update.getCallbackQuery().getMessage().getChatId();
 
             GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
             getBalanceByCurrencyRequest.setParticipantId("1");
-                switch (callData) {
-                    case EUR -> {
-                        getBalanceByCurrencyRequest.setCurrency("EUR");
-                        GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
-                        sendMessage(chatId, "Ваш баланс в EUR: " + getBalanceByCurrencyResponse.getCurrencyBalance());
-                    }
-                    case RUB -> {
-                        getBalanceByCurrencyRequest.setCurrency("RUB");
-                        GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
-                        sendMessage(chatId, "Ваш баланс в RUB: " + getBalanceByCurrencyResponse.getCurrencyBalance()); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
-                    }
+            switch (callData) {
+                case EUR -> {
+                    getBalanceByCurrencyRequest.setCurrency("EUR");
+                    GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
+                    sendMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{EUR}) + getBalanceByCurrencyResponse.getCurrencyBalance());
                 }
+                case RUB -> {
+                    getBalanceByCurrencyRequest.setCurrency("RUB");
+                    GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
+                    sendMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{RUB}) + getBalanceByCurrencyResponse.getCurrencyBalance()); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
+                }
+                case EN -> {
+                    local = Locale.US;
+                    sendMessage(chatId, getLocalizedMessage("change.language.message", null)); // дублирование ?
+                }
+                case RU -> {
+                    local = new Locale("ru", "ru");
+                    sendMessage(chatId, getLocalizedMessage("change.language.message", null));
+                }
+            }
+        }
+    }
+
+    public void handleLangCommand(Long chatId) {
+        String text = messageSource.getMessage("lang.message", null, local);
+
+        SendMessage message = new SendMessage(String.valueOf(chatId), text);
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(); // создаём объект встроенной клавиатуры
+        List<List<InlineKeyboardButton>> rowInLine = new ArrayList<>(); // создали список списков кнопок который объеденяет ряды кнопок
+        List<InlineKeyboardButton> buttonList = new ArrayList<>(); // создаём список кнопок для первого ряда
+
+        InlineKeyboardButton eurButton = new InlineKeyboardButton(); // создаём первую кнопку
+        eurButton.setText("EN");
+        eurButton.setCallbackData("EN"); // идентификатор, который позволяет боту понять какая кнопка была нажата
+
+        InlineKeyboardButton rubButton = new InlineKeyboardButton();// создаём вторую кнопку
+        rubButton.setText("RU");
+        rubButton.setCallbackData("RU"); // идентификатор, который позволяет боту понять какая кнопка была нажата
+
+        buttonList.add(eurButton);
+        buttonList.add(rubButton);
+
+        rowInLine.add(buttonList); // добавляем в первый ряд список кнопок
+
+        inlineKeyboardMarkup.setKeyboard(rowInLine); // добавляем клавиатуру в сообщение
+        message.setReplyMarkup(inlineKeyboardMarkup); //
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) { // уже есть метод sendMessage !
+
         }
     }
 
     public void handleStartCommand(Long chatId, String userName) {
-        String text = "Добро пожаловать в stockMarketBot, %s!" +
-                "\nДоступные команды:" +
-                "\n/help - получение справки";
-        String format = String.format(text, userName);
-        sendMessage(chatId, format);
+        String text = getLocalizedMessage("start.message", new Object[]{userName});
+
+        sendMessage(chatId, text);
     }
 
     public void handleDocumentCommand(Long chatId, GetTransactionsByFilterRequest getTransactionsByFilterRequest) {
         sendDocument(
                 chatId,
                 "Транзакции за что ?",
-                getDoc(stockMarketService.getTransactionsByFilter( "egor", "egor", getTransactionsByFilterRequest))
+                getDoc(stockMarketService.getTransactionsByFilter("egor", "egor", getTransactionsByFilterRequest))
         );
     }
 
     public void handleHelpCommand(Long chatId) {
-        String text = "Доступные команды:" +
-                "\n/start - запуск начального меню" +
-                "\n/help - просмотр доступных команд";
+        String text = getLocalizedMessage("help.message", null);
+
         sendMessage(chatId, text);
     }
-
     public void handleUnknownCommand(Long chatId) {
-        String text = "Неопознанная команда, для просмотра доступных команд воспользуйтесь: /help";
+        String text = getLocalizedMessage("unknown.message", null);
+
         sendMessage(chatId, text);
     }
 
     public void getBalanceByCurrency(Long chatId) {
-        String text = "Введите валюту в которой хотите получить баланс";
+        String text = getLocalizedMessage("getBalance.message", null);
 
         SendMessage message = new SendMessage(String.valueOf(chatId), text);
 
@@ -192,6 +237,10 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
 
         return new InputFile(profileFile);
+    }
+
+    private String getLocalizedMessage(String key, Object[] args) {
+        return messageSource.getMessage(key, args, local);
     }
 
     @Override
