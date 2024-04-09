@@ -84,20 +84,20 @@ public class StockMarketBot extends TelegramLongPollingBot {
                 case EUR -> {
                     getBalanceByCurrencyRequest.setCurrency("EUR");
                     GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
-                    sendMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{EUR}) + getBalanceByCurrencyResponse.getCurrencyBalance());
+                    sendMessage(getMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{EUR}) + getBalanceByCurrencyResponse.getCurrencyBalance()));
                 }
                 case RUB -> {
                     getBalanceByCurrencyRequest.setCurrency("RUB");
                     GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
-                    sendMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{RUB}) + getBalanceByCurrencyResponse.getCurrencyBalance()); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
+                    sendMessage(getMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{RUB}) + getBalanceByCurrencyResponse.getCurrencyBalance())); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
                 }
                 case EN -> {
                     local = Locale.US;
-                    sendMessage(chatId, getLocalizedMessage("change.language.message", null)); // дублирование ?
+                    sendMessage(getMessage(chatId, getLocalizedMessage("change.language.message", null))); // дублирование ?
                 }
                 case RU -> {
                     local = new Locale("ru", "ru");
-                    sendMessage(chatId, getLocalizedMessage("change.language.message", null));
+                    sendMessage(getMessage(chatId, getLocalizedMessage("change.language.message", null)));
                 }
             }
         }
@@ -105,40 +105,20 @@ public class StockMarketBot extends TelegramLongPollingBot {
 
     public void handleLangCommand(Long chatId) {
         String text = messageSource.getMessage("lang.message", null, local);
+        List<String> buttons = new ArrayList<>() {{
+            add("EN");
+            add("RU");
+        }};
 
-        SendMessage message = new SendMessage(String.valueOf(chatId), text);
+        SendMessage sendMessage = addKeyboardToMessage(chatId, text, buttons);
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(); // создаём объект встроенной клавиатуры
-        List<List<InlineKeyboardButton>> rowInLine = new ArrayList<>(); // создали список списков кнопок который объеденяет ряды кнопок
-        List<InlineKeyboardButton> buttonList = new ArrayList<>(); // создаём список кнопок для первого ряда
-
-        InlineKeyboardButton eurButton = new InlineKeyboardButton(); // создаём первую кнопку
-        eurButton.setText("EN");
-        eurButton.setCallbackData("EN"); // идентификатор, который позволяет боту понять какая кнопка была нажата
-
-        InlineKeyboardButton rubButton = new InlineKeyboardButton();// создаём вторую кнопку
-        rubButton.setText("RU");
-        rubButton.setCallbackData("RU"); // идентификатор, который позволяет боту понять какая кнопка была нажата
-
-        buttonList.add(eurButton);
-        buttonList.add(rubButton);
-
-        rowInLine.add(buttonList); // добавляем в первый ряд список кнопок
-
-        inlineKeyboardMarkup.setKeyboard(rowInLine); // добавляем клавиатуру в сообщение
-        message.setReplyMarkup(inlineKeyboardMarkup); //
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) { // уже есть метод sendMessage !
-
-        }
+        sendMessage(sendMessage);
     }
 
     public void handleStartCommand(Long chatId, String userName) {
         String text = getLocalizedMessage("start.message", new Object[]{userName});
 
-        sendMessage(chatId, text);
+        sendMessage(getMessage(chatId, text));
     }
 
     public void handleDocumentCommand(Long chatId, GetTransactionsByFilterRequest getTransactionsByFilterRequest) {
@@ -152,57 +132,61 @@ public class StockMarketBot extends TelegramLongPollingBot {
     public void handleHelpCommand(Long chatId) {
         String text = getLocalizedMessage("help.message", null);
 
-        sendMessage(chatId, text);
+        sendMessage(getMessage(chatId, text));
     }
+
     public void handleUnknownCommand(Long chatId) {
         String text = getLocalizedMessage("unknown.message", null);
 
-        sendMessage(chatId, text);
+        sendMessage(getMessage(chatId, text));
     }
 
     public void getBalanceByCurrency(Long chatId) {
         String text = getLocalizedMessage("getBalance.message", null);
 
-        SendMessage message = new SendMessage(String.valueOf(chatId), text);
+        List<String> buttons = new ArrayList<>(){{
+            add("EUR");
+            add("RUB");
+        }};
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(); // создаём объект встроенной клавиатуры
+        SendMessage sendMessage = addKeyboardToMessage(chatId, text, buttons);
+
+        sendMessage(sendMessage);
+    }
+
+    private SendMessage addKeyboardToMessage(Long chatId, String text, List<String> buttons) {
+        SendMessage message = getMessage(chatId, text);
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(); // создали объект клавиатуры
         List<List<InlineKeyboardButton>> rowInLine = new ArrayList<>(); // создали список списков кнопок который объеденяет ряды кнопок
-        List<InlineKeyboardButton> buttonList = new ArrayList<>(); // создаём список кнопок для первого ряда
+        List<InlineKeyboardButton> buttonList = new ArrayList<>(); // кнопки для первого ряда
 
-        InlineKeyboardButton eurButton = new InlineKeyboardButton(); // создаём первую кнопку
-        eurButton.setText("EUR");
-        eurButton.setCallbackData("EUR"); // идентификатор, который позволяет боту понять какая кнопка была нажата
-
-        InlineKeyboardButton rubButton = new InlineKeyboardButton();// создаём вторую кнопку
-        rubButton.setText("RUB");
-        rubButton.setCallbackData("RUB"); // идентификатор, который позволяет боту понять какая кнопка была нажата
-
-        buttonList.add(eurButton);
-        buttonList.add(rubButton);
+        for (String value : buttons) {
+            InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+            inlineKeyboardButton.setText(value);
+            inlineKeyboardButton.setCallbackData(value);
+            buttonList.add(inlineKeyboardButton);
+        }
 
         rowInLine.add(buttonList); // добавляем в первый ряд список кнопок
 
         inlineKeyboardMarkup.setKeyboard(rowInLine); // добавляем клавиатуру в сообщение
-        message.setReplyMarkup(inlineKeyboardMarkup); //
+        message.setReplyMarkup(inlineKeyboardMarkup);
 
-        try {
-            execute(message);
-        } catch (TelegramApiException e) { // уже есть метод sendMessage !
-
-        }
-
+        return message;
     }
 
-    private SendMessage sendMessage(Long chatId, String text) {
-        String chatIdStr = String.valueOf(chatId);
-        SendMessage sendMessage = new SendMessage(chatIdStr, text);
-
+    private SendMessage sendMessage(SendMessage message) {
         try {
-            execute(sendMessage);
+            execute(message);
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки сообщения", e);
         }
-        return sendMessage;
+        return message;
+    }
+
+    private SendMessage getMessage(Long chatId, String text) {
+        return new SendMessage(String.valueOf(chatId), text);
     }
 
     private void sendDocument(Long chatId, String caption, InputFile document) {
