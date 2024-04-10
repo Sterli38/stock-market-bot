@@ -3,9 +3,10 @@ package com.example.stockmarketbot.bot;
 import com.example.stockmarketbot.config.ApplicationProperties;
 import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
 import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
-import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
 import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByCurrencyResponse;
+import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
 import com.example.stockmarketbot.service.StockMarketService;
+import com.example.stockmarketbot.util.KeyboardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -16,8 +17,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.BufferedWriter;
@@ -46,6 +45,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
     private StockMarketService stockMarketService;
     @Autowired
     private MessageSource messageSource;
+    @Autowired
+    private KeyboardService keyboardService;
 
     public StockMarketBot(ApplicationProperties applicationProperties) {
         super(applicationProperties.getBotToken());
@@ -110,7 +111,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
             add("RU");
         }};
 
-        SendMessage sendMessage = addKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
 
         sendMessage(sendMessage);
     }
@@ -149,31 +150,9 @@ public class StockMarketBot extends TelegramLongPollingBot {
             add("RUB");
         }};
 
-        SendMessage sendMessage = addKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
 
         sendMessage(sendMessage);
-    }
-
-    private SendMessage addKeyboardToMessage(Long chatId, String text, List<String> buttons) {
-        SendMessage message = getMessage(chatId, text);
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(); // создали объект клавиатуры
-        List<List<InlineKeyboardButton>> rowInLine = new ArrayList<>(); // создали список списков кнопок который объеденяет ряды кнопок
-        List<InlineKeyboardButton> buttonList = new ArrayList<>(); // кнопки для первого ряда
-
-        for (String value : buttons) {
-            InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
-            inlineKeyboardButton.setText(value);
-            inlineKeyboardButton.setCallbackData(value);
-            buttonList.add(inlineKeyboardButton);
-        }
-
-        rowInLine.add(buttonList); // добавляем в первый ряд список кнопок
-
-        inlineKeyboardMarkup.setKeyboard(rowInLine); // добавляем клавиатуру в сообщение
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        return message;
     }
 
     private SendMessage sendMessage(SendMessage message) {
@@ -186,7 +165,9 @@ public class StockMarketBot extends TelegramLongPollingBot {
     }
 
     private SendMessage getMessage(Long chatId, String text) {
-        return new SendMessage(String.valueOf(chatId), text);
+        SendMessage sendMessage = new SendMessage(String.valueOf(chatId), text);
+        keyboardService.setButtonsToMainMenu(sendMessage);
+        return sendMessage;
     }
 
     private void sendDocument(Long chatId, String caption, InputFile document) {

@@ -13,4 +13,8 @@ public class ApplicationProperties {
     private String stockMarketServiceUrl;
     @Value("${stock.market.bot.token}")
     private String botToken;
+    @Value("${stock.market.bot.number-of-buttons-in-row.inlineKeyboards}")
+    private int numberOfButtonsInRowInlineKeyboards;
+    @Value("${stock.market.bot.number-of-buttons-on-row.replyKeyboardsMarkup}")
+    private int numberOfButtonsInRowReplyKeyboardsMarkup;
 }
