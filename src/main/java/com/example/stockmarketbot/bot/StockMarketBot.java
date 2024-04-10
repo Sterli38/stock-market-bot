@@ -71,7 +71,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
                     getTransactionsByFilterRequest.setOperationType("DEPOSITING");
                     handleDocumentCommand(chatId, getTransactionsByFilterRequest);
                 }
-                case GETBALANCEBYCURRENCY -> getBalanceByCurrency(chatId);
+                case GETBALANCEBYCURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
                 default -> handleUnknownCommand(chatId);
             }
 
@@ -142,7 +142,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
         sendMessage(getMessage(chatId, text));
     }
 
-    public void getBalanceByCurrency(Long chatId) {
+    public void handleGetBalanceByCurrencyCommand(Long chatId) {
         String text = getLocalizedMessage("getBalance.message", null);
 
         List<String> buttons = new ArrayList<>(){{
