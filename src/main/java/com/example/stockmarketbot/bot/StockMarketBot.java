@@ -17,7 +17,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.BufferedWriter;
@@ -46,6 +49,8 @@ public class StockMarketBot extends TelegramLongPollingBot {
     private StockMarketService stockMarketService;
     @Autowired
     private MessageSource messageSource;
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     public StockMarketBot(ApplicationProperties applicationProperties) {
         super(applicationProperties.getBotToken());
@@ -154,24 +159,76 @@ public class StockMarketBot extends TelegramLongPollingBot {
         sendMessage(sendMessage);
     }
 
+    public synchronized void setButtons(SendMessage sendMessage) {
+        //создаём список из кнопок
+        List<KeyboardButton> buttons = new ArrayList<>(){{
+            add(new KeyboardButton("/start"));
+            add(new KeyboardButton("/help"));
+            add(new KeyboardButton("/lang"));
+            add(new KeyboardButton("/getBalanceByCurrency"));
+            add(new KeyboardButton("/getTransactionsByFilter"));
+        }};
+        // Создаем клавиатуру
+        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+        sendMessage.setReplyMarkup(keyboard);
+        keyboard.setSelective(true);
+        keyboard.setResizeKeyboard(true);
+        keyboard.setOneTimeKeyboard(false);
+
+        // Создаем список строк клавиатуры
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+
+        KeyboardRow row = new KeyboardRow(); // создаём строку, на каждой строке будет по две кнопки это указано в условии цикла
+
+        int counterAddedButtons = 0; // счётчик кнопок на строке
+
+        for(int i = 0; i < buttons.size() ; i++) {
+            if(counterAddedButtons == 3) { // Если уже добавлено три кнопки на одну строку, то создаём новую строку
+                keyboardRows.add(row);
+                counterAddedButtons = 0;
+                row = new KeyboardRow();
+            }
+            row.add(buttons.get(i));
+            counterAddedButtons++;
+            if( i == buttons.size() - 1) {
+                keyboardRows.add(row);
+            }
+        }
+
+        // и устанваливаем этот список нашей клавиатуре
+        keyboard.setKeyboard(keyboardRows);
+    }
+
     private SendMessage addKeyboardToMessage(Long chatId, String text, List<String> buttons) {
         SendMessage message = getMessage(chatId, text);
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup(); // создали объект клавиатуры
-        List<List<InlineKeyboardButton>> rowInLine = new ArrayList<>(); // создали список списков кнопок который объеденяет ряды кнопок
-        List<InlineKeyboardButton> buttonList = new ArrayList<>(); // кнопки для первого ряда
+        InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup(); // создали объект клавиатуры
 
-        for (String value : buttons) {
-            InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
-            inlineKeyboardButton.setText(value);
-            inlineKeyboardButton.setCallbackData(value);
-            buttonList.add(inlineKeyboardButton);
+        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>(); // Создали список для строк которые будут прикреплены к сообщению
+
+        List<InlineKeyboardButton> row = new ArrayList<>(); // строка
+
+        int counterAddedButtons = 0; // сколько кнопок будет на строке
+
+        for(int i = 0; i < buttons.size() ; i++) {
+            if(counterAddedButtons == 3) { // Если уже добавлено три кнопки на одну строку, то создаём новую строку
+                keyboardRows.add(row);
+                counterAddedButtons = 0;
+                row = new ArrayList<>() ;
+            }
+            String buttonText = buttons.get(i);
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(buttonText);
+            button.setCallbackData(buttonText);
+            row.add(button);
+            counterAddedButtons++;
+            if( i == buttons.size() - 1) {
+                keyboardRows.add(row);
+            }
         }
 
-        rowInLine.add(buttonList); // добавляем в первый ряд список кнопок
-
-        inlineKeyboardMarkup.setKeyboard(rowInLine); // добавляем клавиатуру в сообщение
-        message.setReplyMarkup(inlineKeyboardMarkup);
+        keyboardMarkup.setKeyboard(keyboardRows); //Добавляем строки в клавиатуру
+        message.setReplyMarkup(keyboardMarkup);// Добавляем клавиатуру к сообщению
 
         return message;
     }
@@ -186,7 +243,9 @@ public class StockMarketBot extends TelegramLongPollingBot {
     }
 
     private SendMessage getMessage(Long chatId, String text) {
-        return new SendMessage(String.valueOf(chatId), text);
+        SendMessage sendMessage = new SendMessage(String.valueOf(chatId), text);
+        setButtons(sendMessage);
+        return sendMessage;
     }
 
     private void sendDocument(Long chatId, String caption, InputFile document) {
