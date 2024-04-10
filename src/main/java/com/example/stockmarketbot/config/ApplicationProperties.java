@@ -14,7 +14,7 @@ public class ApplicationProperties {
     @Value("${stock.market.bot.token}")
     private String botToken;
     @Value("${stock.market.bot.number-of-buttons-in-row.inlineKeyboards}")
-    private String numberOfButtonsInRowInlineKeyboards;
+    private int numberOfButtonsInRowInlineKeyboards;
     @Value("${stock.market.bot.number-of-buttons-on-row.replyKeyboardsMarkup}")
-    private String numberOfButtonsInRowReplyKeyboardsMarkup;
+    private int numberOfButtonsInRowReplyKeyboardsMarkup;
 }
