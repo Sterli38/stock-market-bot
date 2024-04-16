@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ResourceUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -21,7 +20,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -155,13 +153,12 @@ public class StockMarketBot extends TelegramLongPollingBot {
         sendMessage(sendMessage);
     }
 
-    private SendMessage sendMessage(SendMessage message) {
+    private void sendMessage(SendMessage message) {
         try {
             execute(message);
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки сообщения", e);
         }
-        return message;
     }
 
     private SendMessage getMessage(Long chatId, String text) {
@@ -181,27 +178,24 @@ public class StockMarketBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки сообщения", e);
         }
+        deleteSendDocument(document);
     }
 
     private InputFile getDoc(List<GetTransactionsByFilterResponse> response) {
-        File profileFile;
+        String value = response.toString();
+        File profileFile = new File("ParticipantTransactions.txt");
 
-        try {
-            profileFile = ResourceUtils.getFile("src/main/resources/static/participantTransactions");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        try (FileWriter fw = new FileWriter(profileFile.getAbsoluteFile());
-
-             BufferedWriter bw = new BufferedWriter(fw)) {
-
-            bw.write(response.toString());
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(profileFile))) {
+            bw.write(value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         return new InputFile(profileFile);
+    }
+
+    private void deleteSendDocument(InputFile document) {
+        document.getNewMediaFile().delete();
     }
 
     private String getLocalizedMessage(String key, Object[] args) {
