@@ -1,7 +1,7 @@
 package com.example.stockmarketbot.util;
 
 import com.example.stockmarketbot.config.ApplicationProperties;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -14,21 +14,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class KeyboardService {
-    @Autowired
-    private ApplicationProperties applicationProperties;
+    private final ApplicationProperties applicationProperties;
+    private final List<KeyboardButton> mainMenuButtons = new ArrayList<>(){{
+        add(new KeyboardButton("/start"));
+        add(new KeyboardButton("/help"));
+        add(new KeyboardButton("/lang"));
+        add(new KeyboardButton("/getBalanceByCurrency"));
+        add(new KeyboardButton("/getTransactionsByFilter"));
+    }};
+
     public synchronized void setButtonsToMainMenu(SendMessage sendMessage) {
         //создаём список из кнопок
         /*
         // вынести ?
          */
-        List<KeyboardButton> buttons = new ArrayList<>(){{
-            add(new KeyboardButton("/start"));
-            add(new KeyboardButton("/help"));
-            add(new KeyboardButton("/lang"));
-            add(new KeyboardButton("/getBalanceByCurrency"));
-            add(new KeyboardButton("/getTransactionsByFilter"));
-        }};
+
         // Создаем клавиатуру
         ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
         sendMessage.setReplyMarkup(keyboard);
@@ -41,18 +43,13 @@ public class KeyboardService {
 
         KeyboardRow row = new KeyboardRow(); // создаём строку, на каждой строке будет по две кнопки это указано в условии цикла
 
-
-        int counterAddedButtons = 0; // счётчик кнопок на строке
-
-        for(int i = 0; i < buttons.size() ; i++) {
-            if(counterAddedButtons == applicationProperties.getNumberOfButtonsInRowReplyKeyboardsMarkup()) { // Если уже добавлено три кнопки на одну строку, то создаём новую строку
+        for(int i = 0; i < mainMenuButtons.size() ; i++) {
+            if(row.size() == applicationProperties.getNumberOfButtonsInRowReplyKeyboardsMarkup()) { // Если уже добавлено три кнопки на одну строку, то создаём новую строку
                 keyboardRows.add(row);
-                counterAddedButtons = 0;
                 row = new KeyboardRow();
             }
-            row.add(buttons.get(i));
-            counterAddedButtons++;
-            if( i == buttons.size() - 1) {
+            row.add(mainMenuButtons.get(i));
+            if( i == mainMenuButtons.size() - 1) {
                 keyboardRows.add(row);
             }
         }
@@ -63,11 +60,8 @@ public class KeyboardService {
 
     public SendMessage setKeyboardToMessage(Long chatId, String text, List<String> buttons) {
         SendMessage message = getMessage(chatId, text);
-
         InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup(); // создали объект клавиатуры
-
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>(); // Создали список для строк которые будут прикреплены к сообщению
-
         List<InlineKeyboardButton> row = new ArrayList<>(); // строка
 
         int counterAddedButtons = 0; // сколько кнопок будет на строке

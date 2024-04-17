@@ -7,6 +7,7 @@ import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByC
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
 import com.example.stockmarketbot.service.StockMarketService;
 import com.example.stockmarketbot.util.KeyboardService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -41,15 +42,15 @@ public class StockMarketBot extends TelegramLongPollingBot {
     private static final String EN = "EN";
     private static final String RU = "RU";
     private Locale local = Locale.US;
-    @Autowired
-    private StockMarketService stockMarketService;
-    @Autowired
-    private MessageSource messageSource;
-    @Autowired
-    private KeyboardService keyboardService;
+    private final StockMarketService stockMarketService;
+    private final MessageSource messageSource;
+    private final KeyboardService keyboardService;
 
-    public StockMarketBot(ApplicationProperties applicationProperties) {
+    public StockMarketBot(ApplicationProperties applicationProperties, StockMarketService stockMarketService, MessageSource messageSource, KeyboardService keyboardService) {
         super(applicationProperties.getBotToken());
+        this.stockMarketService = stockMarketService;
+        this.messageSource = messageSource;
+        this.keyboardService = keyboardService;
     }
 
     @Override
