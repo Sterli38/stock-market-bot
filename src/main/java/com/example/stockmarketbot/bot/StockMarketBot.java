@@ -120,11 +120,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
     }
 
     public void handleDocumentCommand(Long chatId, GetTransactionsByFilterRequest getTransactionsByFilterRequest) {
-        sendDocument(
-                chatId,
-                "Транзакции за что ?",
-                getDoc(stockMarketService.getTransactionsByFilter("egor", "egor", getTransactionsByFilterRequest))
-        );
+        sendDocument(getDoc(chatId, stockMarketService.getTransactionsByFilter("egor", "egor", getTransactionsByFilterRequest)));
     }
 
     public void handleHelpCommand(Long chatId) {
@@ -166,21 +162,16 @@ public class StockMarketBot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
-    private void sendDocument(Long chatId, String caption, InputFile document) {
-        SendDocument document1 = new SendDocument();
-        document1.setChatId(chatId);
-        document1.setCaption(caption);
-        document1.setDocument(document);
-
+    private void sendDocument(SendDocument document) {
         try {
-            execute(document1);
+            execute(document);
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки сообщения", e);
         }
-        deleteSendDocument(document);
+        deleteSendDocument(document.getDocument());
     }
 
-    private InputFile getDoc(List<GetTransactionsByFilterResponse> response) {
+    private SendDocument getDoc(Long chatId, List<GetTransactionsByFilterResponse> response) {
         String value = response.toString();
         File profileFile = new File("ParticipantTransactions.txt");
 
@@ -190,7 +181,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
 
-        return new InputFile(profileFile);
+        return new SendDocument(String.valueOf(chatId), new InputFile(profileFile));
     }
 
     private void deleteSendDocument(InputFile document) {
