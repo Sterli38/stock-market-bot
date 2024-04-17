@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.BufferedWriter;
@@ -103,12 +104,23 @@ public class StockMarketBot extends TelegramLongPollingBot {
 
     public void handleLangCommand(Long chatId) {
         String text = messageSource.getMessage("lang.message", null, local);
-        List<String> buttons = new ArrayList<>() {{
-            add("EN");
-            add("RU");
+
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText("EN");
+        button.setCallbackData("EN");
+
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText("RU");
+        button1.setCallbackData("RU");
+
+        List<InlineKeyboardButton> buttons = new ArrayList<>() {{
+            add(button);
+            add(button1);
         }};
 
-        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = getMessage(chatId, text);
+
+        keyboardService.setKeyboardToMessage(sendMessage, buttons);
 
         sendMessage(sendMessage);
     }
@@ -142,12 +154,22 @@ public class StockMarketBot extends TelegramLongPollingBot {
     public void handleGetBalanceByCurrencyCommand(Long chatId) {
         String text = getLocalizedMessage("getBalance.message", null);
 
-        List<String> buttons = new ArrayList<>(){{
-            add("EUR");
-            add("RUB");
+        InlineKeyboardButton button = new InlineKeyboardButton();
+        button.setText("EUR");
+        button.setCallbackData("EUR");
+
+        InlineKeyboardButton button1 = new InlineKeyboardButton();
+        button1.setText("RUB");
+        button1.setCallbackData("RUB");
+
+        List<InlineKeyboardButton> buttons = new ArrayList<>(){{
+            add(button);
+            add(button1);
         }};
 
-        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = getMessage(chatId, text);
+
+        keyboardService.setKeyboardToMessage(sendMessage, buttons);
 
         sendMessage(sendMessage);
     }
