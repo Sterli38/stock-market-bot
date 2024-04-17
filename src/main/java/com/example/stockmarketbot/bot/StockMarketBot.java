@@ -7,9 +7,7 @@ import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByC
 import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
 import com.example.stockmarketbot.service.StockMarketService;
 import com.example.stockmarketbot.util.KeyboardService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -32,9 +30,9 @@ import java.util.Locale;
 public class StockMarketBot extends TelegramLongPollingBot {
     private static final String START = "/start";
     private static final String HELP = "/help";
-    private static final String GETTRANSACTIONSBYFILTER = "/getTransactionsByFilter";
+    private static final String GET_TRANSACTIONS_BY_FILTER = "/getTransactionsByFilter";
     private static final String LANG = "/lang";
-    private static final String GETBALANCEBYCURRENCY = "/getBalanceByCurrency";
+    private static final String GET_BALANCE_BY_CURRENCY = "/getBalanceByCurrency";
     private static final String EUR = "EUR";
     private static final String RUB = "RUB"; // вынести
     private static final String EN = "EN";
@@ -64,13 +62,13 @@ public class StockMarketBot extends TelegramLongPollingBot {
                 case START -> handleStartCommand(chatId, username);
                 case HELP -> handleHelpCommand(chatId);
                 case LANG -> handleLangCommand(chatId);
-                case GETTRANSACTIONSBYFILTER -> {
+                case GET_TRANSACTIONS_BY_FILTER -> {
                     GetTransactionsByFilterRequest getTransactionsByFilterRequest = new GetTransactionsByFilterRequest();
                     getTransactionsByFilterRequest.setParticipantId("1");
                     getTransactionsByFilterRequest.setOperationType("DEPOSITING");
                     handleDocumentCommand(chatId, getTransactionsByFilterRequest);
                 }
-                case GETBALANCEBYCURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
+                case GET_BALANCE_BY_CURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
                 default -> handleUnknownCommand(chatId);
             }
 
