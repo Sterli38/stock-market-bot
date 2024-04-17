@@ -1,29 +1,14 @@
 package com.example.stockmarketbot.bot;
 
 import com.example.stockmarketbot.config.ApplicationProperties;
-import com.example.stockmarketbot.integration.stockmarket.request.GetBalanceByCurrencyRequest;
-import com.example.stockmarketbot.integration.stockmarket.request.GetTransactionsByFilterRequest;
-import com.example.stockmarketbot.integration.stockmarket.response.GetBalanceByCurrencyResponse;
-import com.example.stockmarketbot.integration.stockmarket.response.GetTransactionsByFilterResponse;
-import com.example.stockmarketbot.service.StockMarketService;
-import com.example.stockmarketbot.util.KeyboardService;
+import com.example.stockmarketbot.service.CommandHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 @Slf4j
 @Component
@@ -33,20 +18,14 @@ public class StockMarketBot extends TelegramLongPollingBot {
     private static final String GET_TRANSACTIONS_BY_FILTER = "/getTransactionsByFilter";
     private static final String LANG = "/lang";
     private static final String GET_BALANCE_BY_CURRENCY = "/getBalanceByCurrency";
-    private static final String EUR = "EUR";
-    private static final String RUB = "RUB"; // вынести
+    public static final String EUR = "EUR";
+    public static final String RUB = "RUB"; // вынести
     private static final String EN = "EN";
     private static final String RU = "RU";
-    private Locale local = Locale.US;
-    private final StockMarketService stockMarketService;
-    private final MessageSource messageSource;
-    private final KeyboardService keyboardService;
-
-    public StockMarketBot(ApplicationProperties applicationProperties, StockMarketService stockMarketService, MessageSource messageSource, KeyboardService keyboardService) {
+    private final CommandHandler commandHandler;
+    public StockMarketBot(ApplicationProperties applicationProperties, CommandHandler commandHandler) {
         super(applicationProperties.getBotToken());
-        this.stockMarketService = stockMarketService;
-        this.messageSource = messageSource;
-        this.keyboardService = keyboardService;
+        this.commandHandler = commandHandler;
     }
 
     @Override
@@ -59,97 +38,24 @@ public class StockMarketBot extends TelegramLongPollingBot {
             String username = update.getMessage().getChat().getUserName();
 
             switch (message) {
-                case START -> handleStartCommand(chatId, username);
-                case HELP -> handleHelpCommand(chatId);
-                case LANG -> handleLangCommand(chatId);
-                case GET_TRANSACTIONS_BY_FILTER -> {
-                    GetTransactionsByFilterRequest getTransactionsByFilterRequest = new GetTransactionsByFilterRequest();
-                    getTransactionsByFilterRequest.setParticipantId("1");
-                    getTransactionsByFilterRequest.setOperationType("DEPOSITING");
-                    handleDocumentCommand(chatId, getTransactionsByFilterRequest);
-                }
-                case GET_BALANCE_BY_CURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
-                default -> handleUnknownCommand(chatId);
+                case START -> sendMessage(commandHandler.handleStartCommand(chatId, username));
+                case HELP -> sendMessage(commandHandler.handleHelpCommand(chatId));
+                case LANG -> sendMessage(commandHandler.handleLangCommand(chatId));
+                case GET_TRANSACTIONS_BY_FILTER -> sendDocument(commandHandler.handleGetTransactionsByFilterCommand(chatId));
+                case GET_BALANCE_BY_CURRENCY -> sendMessage(commandHandler.handleGetBalanceByCurrencyCommand(chatId));
+                default -> sendMessage(commandHandler.handleUnknownCommand(chatId));
             }
 
-        } else if (update.hasCallbackQuery()) { // Если пользователь нажал на кнопку ( передал id кнопки (CallBackData))
+        } else if (update.hasCallbackQuery()) {
             String callData = update.getCallbackQuery().getData();
             chatId = update.getCallbackQuery().getMessage().getChatId();
-
-            GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
-            getBalanceByCurrencyRequest.setParticipantId("1");
             switch (callData) {
-                case EUR -> {
-                    getBalanceByCurrencyRequest.setCurrency("EUR");
-                    GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
-                    sendMessage(getMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{EUR}) + getBalanceByCurrencyResponse.getCurrencyBalance()));
-                }
-                case RUB -> {
-                    getBalanceByCurrencyRequest.setCurrency("RUB");
-                    GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
-                    sendMessage(getMessage(chatId, getLocalizedMessage("getBalance.response.message", new Object[]{RUB}) + getBalanceByCurrencyResponse.getCurrencyBalance())); // когда нажимаю кнопку, повторно нажать её не могу без перезапуска, понять почему так
-                }
-                case EN -> {
-                    local = Locale.US;
-                    sendMessage(getMessage(chatId, getLocalizedMessage("change.language.message", null))); // дублирование ?
-                }
-                case RU -> {
-                    local = new Locale("ru", "ru");
-                    sendMessage(getMessage(chatId, getLocalizedMessage("change.language.message", null)));
-                }
+                case EUR -> sendMessage(commandHandler.handleEURCommand(chatId));
+                case RUB -> sendMessage(commandHandler.handleRUBCommand(chatId));
+                case EN -> sendMessage(commandHandler.handleEnCommand(chatId));
+                case RU -> sendMessage(commandHandler.handleRuCommand(chatId));
             }
         }
-    }
-
-    public void handleLangCommand(Long chatId) {
-        String text = messageSource.getMessage("lang.message", null, local);
-        List<String> buttons = new ArrayList<>() {{
-            add("EN");
-            add("RU");
-        }};
-
-        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
-
-        sendMessage(sendMessage);
-    }
-
-    public void handleStartCommand(Long chatId, String userName) {
-        String text = getLocalizedMessage("start.message", new Object[]{userName});
-
-        sendMessage(getMessage(chatId, text));
-    }
-
-    public void handleDocumentCommand(Long chatId, GetTransactionsByFilterRequest getTransactionsByFilterRequest) {
-        sendDocument(
-                chatId,
-                "Транзакции за что ?",
-                getDoc(stockMarketService.getTransactionsByFilter("egor", "egor", getTransactionsByFilterRequest))
-        );
-    }
-
-    public void handleHelpCommand(Long chatId) {
-        String text = getLocalizedMessage("help.message", null);
-
-        sendMessage(getMessage(chatId, text));
-    }
-
-    public void handleUnknownCommand(Long chatId) {
-        String text = getLocalizedMessage("unknown.message", null);
-
-        sendMessage(getMessage(chatId, text));
-    }
-
-    public void handleGetBalanceByCurrencyCommand(Long chatId) {
-        String text = getLocalizedMessage("getBalance.message", null);
-
-        List<String> buttons = new ArrayList<>(){{
-            add("EUR");
-            add("RUB");
-        }};
-
-        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
-
-        sendMessage(sendMessage);
     }
 
     private void sendMessage(SendMessage message) {
@@ -160,45 +66,12 @@ public class StockMarketBot extends TelegramLongPollingBot {
         }
     }
 
-    private SendMessage getMessage(Long chatId, String text) {
-        SendMessage sendMessage = new SendMessage(String.valueOf(chatId), text);
-        keyboardService.setButtonsToMainMenu(sendMessage);
-        return sendMessage;
-    }
-
-    private void sendDocument(Long chatId, String caption, InputFile document) {
-        SendDocument document1 = new SendDocument();
-        document1.setChatId(chatId);
-        document1.setCaption(caption);
-        document1.setDocument(document);
-
+    private void sendDocument(SendDocument document) {
         try {
-            execute(document1);
+            execute(document);
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки сообщения", e);
         }
-        deleteSendDocument(document);
-    }
-
-    private InputFile getDoc(List<GetTransactionsByFilterResponse> response) {
-        String value = response.toString();
-        File profileFile = new File("ParticipantTransactions.txt");
-
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(profileFile))) {
-            bw.write(value);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return new InputFile(profileFile);
-    }
-
-    private void deleteSendDocument(InputFile document) {
-        document.getNewMediaFile().delete();
-    }
-
-    private String getLocalizedMessage(String key, Object[] args) {
-        return messageSource.getMessage(key, args, local);
     }
 
     @Override
