@@ -115,7 +115,9 @@ public class StockMarketBot extends TelegramLongPollingBot {
             add(button1);
         }};
 
-        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = getMessage(chatId, text);
+
+        keyboardService.setKeyboardToMessage(sendMessage, buttons);
 
         sendMessage(sendMessage);
     }
@@ -158,7 +160,9 @@ public class StockMarketBot extends TelegramLongPollingBot {
             add(button1);
         }};
 
-        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = getMessage(chatId, text);
+
+        keyboardService.setKeyboardToMessage(sendMessage, buttons);
 
         sendMessage(sendMessage);
     }
