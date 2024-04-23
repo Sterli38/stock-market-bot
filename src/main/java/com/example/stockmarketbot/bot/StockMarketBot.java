@@ -18,10 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -118,9 +115,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
             add(button1);
         }};
 
-        SendMessage sendMessage = getMessage(chatId, text);
-
-        keyboardService.setKeyboardToMessage(sendMessage, buttons);
+        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
 
         sendMessage(sendMessage);
     }
@@ -132,11 +127,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
     }
 
     public void handleDocumentCommand(Long chatId, GetTransactionsByFilterRequest getTransactionsByFilterRequest) {
-        sendDocument(
-                chatId,
-                "Транзакции за что ?",
-                getDoc(stockMarketService.getTransactionsByFilter("egor", "egor", getTransactionsByFilterRequest))
-        );
+        sendDocument(getDoc(chatId, stockMarketService.getTransactionsByFilter("egor", "egor", getTransactionsByFilterRequest)));
     }
 
     public void handleHelpCommand(Long chatId) {
@@ -167,9 +158,7 @@ public class StockMarketBot extends TelegramLongPollingBot {
             add(button1);
         }};
 
-        SendMessage sendMessage = getMessage(chatId, text);
-
-        keyboardService.setKeyboardToMessage(sendMessage, buttons);
+        SendMessage sendMessage = keyboardService.setKeyboardToMessage(chatId, text, buttons);
 
         sendMessage(sendMessage);
     }
@@ -188,35 +177,19 @@ public class StockMarketBot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
-    private void sendDocument(Long chatId, String caption, InputFile document) {
-        SendDocument document1 = new SendDocument();
-        document1.setChatId(chatId);
-        document1.setCaption(caption);
-        document1.setDocument(document);
-
+    private void sendDocument(SendDocument document) {
         try {
-            execute(document1);
+            execute(document);
         } catch (TelegramApiException e) {
             log.error("Ошибка отправки сообщения", e);
         }
-        deleteSendDocument(document);
     }
 
-    private InputFile getDoc(List<GetTransactionsByFilterResponse> response) {
-        String value = response.toString();
-        File profileFile = new File("ParticipantTransactions.txt");
+    private SendDocument getDoc(Long chatId, List<GetTransactionsByFilterResponse> response) {
+        byte[] value = response.toString().getBytes();
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(value);
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(profileFile))) {
-            bw.write(value);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return new InputFile(profileFile);
-    }
-
-    private void deleteSendDocument(InputFile document) {
-        document.getNewMediaFile().delete();
+        return new SendDocument(String.valueOf(chatId), new InputFile(byteArrayInputStream, "ParticipantTransactions.txt"));
     }
 
     private String getLocalizedMessage(String key, Object[] args) {
