@@ -17,12 +17,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class KeyboardService {
     private final ApplicationProperties applicationProperties;
-    private final List<KeyboardButton> mainMenuButtons = new ArrayList<>() {{
-        add(new KeyboardButton("/start"));
-        add(new KeyboardButton("/help"));
-        add(new KeyboardButton("/lang"));
-        add(new KeyboardButton("/getBalanceByCurrency"));
-        add(new KeyboardButton("/getTransactionsByFilter"));
+    private final List<String> mainMenuButtons = new ArrayList<>() {{
+        add("/start");
+        add("/help");
+        add("/lang");
+        add("/getBalanceByCurrency");
+        add("/getTransactionsByFilter");
     }};
 
     public synchronized void setButtonsToMainMenu(SendMessage sendMessage) {
@@ -39,7 +39,7 @@ public class KeyboardService {
                 keyboardRows.add(row);
                 row = new KeyboardRow();
             }
-            row.add(mainMenuButtons.get(i));
+            row.add(new KeyboardButton(mainMenuButtons.get(i)));
             if (i == mainMenuButtons.size() - 1) {
                 keyboardRows.add(row);
             }
@@ -48,7 +48,7 @@ public class KeyboardService {
         keyboard.setKeyboard(keyboardRows);
     }
 
-    public void setKeyboardToMessage(SendMessage sendMessage, List<InlineKeyboardButton> buttons) {
+    public void setKeyboardToMessage(SendMessage sendMessage, List<String> buttons) {
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         sendMessage.setReplyMarkup(keyboard);
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
@@ -59,7 +59,9 @@ public class KeyboardService {
                 keyboardRows.add(row);
                 row = new ArrayList<>();
             }
-            row.add(buttons.get(i));
+            InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton(buttons.get(i));
+            inlineKeyboardButton.setCallbackData(buttons.get(i));
+            row.add(inlineKeyboardButton);
             if (i == buttons.size() - 1) {
                 keyboardRows.add(row);
             }

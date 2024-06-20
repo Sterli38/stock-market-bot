@@ -37,7 +37,11 @@ public class CommandHandler {
             add("RU");
         }};
 
-        return keyboardService.setKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = getMessage(chatId, text);
+
+        keyboardService.setKeyboardToMessage(sendMessage, buttons);
+
+        return sendMessage;
     }
 
     public SendMessage handleStartCommand(Long chatId, String userName) {
@@ -66,7 +70,10 @@ public class CommandHandler {
             add("RUB");
         }};
 
-        return keyboardService.setKeyboardToMessage(chatId, text, buttons);
+        SendMessage sendMessage = getMessage(chatId, text);
+        keyboardService.setKeyboardToMessage(sendMessage, buttons);
+
+        return sendMessage;
     }
 
     public SendMessage handleRuCommand(Long chatId) {
