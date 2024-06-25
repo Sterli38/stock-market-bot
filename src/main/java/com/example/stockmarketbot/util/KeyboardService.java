@@ -59,9 +59,7 @@ public class KeyboardService {
                 keyboardRows.add(row);
                 row = new ArrayList<>();
             }
-            InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton(buttons.get(i));
-            inlineKeyboardButton.setCallbackData(buttons.get(i));
-            row.add(inlineKeyboardButton);
+            row.add(InlineKeyboardButton.builder().text(buttons.get(i)).callbackData(buttons.get(i)).build());
             if (i == buttons.size() - 1) {
                 keyboardRows.add(row);
             }
