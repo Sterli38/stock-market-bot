@@ -49,7 +49,6 @@ public class StockMarketServiceImpl implements StockMarketService {
 
     public List<GetTransactionsByFilterResponse> getTransactionsByFilter(String login, String password, GetTransactionsByFilterRequest request) {
         String url = getFinalUrl("/transactional/getTransactions");
-        GetTransactionsByFilterResponse getTransactionsByFilterResponse = new GetTransactionsByFilterResponse();
 
         HttpHeaders httpHeaders = new org.springframework.http.HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
@@ -65,7 +64,7 @@ public class StockMarketServiceImpl implements StockMarketService {
         } catch (RestClientException exception) {
             throw new RestClientException(exception.getMessage());// добавить исключение
         }
-        if(getTransactionsByFilterResponse == null) {
+        if(entity1.getBody() == null) {
             throw new RestClientException("answer from stockMarket service was not received");
         }
         return entity1.getBody();
