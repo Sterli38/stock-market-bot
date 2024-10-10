@@ -3,8 +3,10 @@ package com.example.stockmarketbot.util;
 import com.example.stockmarketbot.config.ApplicationProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.interfaces.BotApiObject;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -12,59 +14,66 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 
 @Component
 @RequiredArgsConstructor
 public class KeyboardService {
     private final ApplicationProperties applicationProperties;
-    private final List<String> mainMenuButtons = new ArrayList<>() {{
-        add("/start");
-        add("/help");
-        add("/lang");
-        add("/getBalanceByCurrency");
-        add("/getTransactionsByFilter");
-    }};
+    private static final List<String> mainMenuButtons = List.of(
+            "/start",
+            "/help",
+            "/lang",
+            "/getBalanceByCurrency",
+            "/getTransactionsByFilter"
+    );
 
     public synchronized void setButtonsToMainMenu(SendMessage sendMessage) {
         ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(keyboard);
         keyboard.setSelective(true);
         keyboard.setResizeKeyboard(true);
         keyboard.setOneTimeKeyboard(false);
-        List<KeyboardRow> keyboardRows = new ArrayList<>();
-        KeyboardRow row = new KeyboardRow();
 
-        for (int i = 0; i < mainMenuButtons.size(); i++) {
-            if (row.size() == applicationProperties.getNumberOfButtonsInRowReplyKeyboardsMarkup()) {
-                keyboardRows.add(row);
-                row = new KeyboardRow();
-            }
-            row.add(new KeyboardButton(mainMenuButtons.get(i)));
-            if (i == mainMenuButtons.size() - 1) {
-                keyboardRows.add(row);
-            }
-        }
+        List<List> keyboardRows = new ArrayList<>();
+        List row = new KeyboardRow();
 
-        keyboard.setKeyboard(keyboardRows);
+        fill(mainMenuButtons, row, applicationProperties.getNumberOfButtonsInRowReplyKeyboardsMarkup(), keyboardRows, (mainMenuButtons, index) -> new KeyboardButton(mainMenuButtons.get(index)));
+
+        List<KeyboardRow> keyboardRows1 = keyboardRows.stream().map(KeyboardRow::new).toList();
+
+        keyboard.setKeyboard(keyboardRows1);
+        commons(sendMessage, keyboard);
     }
 
     public void setKeyboardToMessage(SendMessage sendMessage, List<String> buttons) {
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
-        sendMessage.setReplyMarkup(keyboard);
-        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
+        List<List> keyboardRows = new ArrayList<>();
+        List row = new ArrayList<>();
 
+        fill(buttons, row, applicationProperties.getNumberOfButtonsInRowInlineKeyboards(), keyboardRows, (i, index) -> new InlineKeyboardButton(buttons.get(index)));
+
+        List<List<InlineKeyboardButton>> keyboardRows1 = keyboardRows.stream().map(i -> (List<InlineKeyboardButton>) i).toList();
+        keyboard.setKeyboard(keyboardRows1);
+
+        commons(sendMessage, keyboard);
+    }
+
+    private void fill(List<String> buttons, List<Object> row, int buttonsInRow, List<List> keyboardRows, BiFunction<List<String>, Integer, BotApiObject> bifunction) {
         for (int i = 0; i < buttons.size(); i++) {
-            if (row.size() == applicationProperties.getNumberOfButtonsInRowInlineKeyboards()) {
+            if (row.size() == buttonsInRow) {
                 keyboardRows.add(row);
                 row = new ArrayList<>();
             }
-            row.add(InlineKeyboardButton.builder().text(buttons.get(i)).callbackData(buttons.get(i)).build());
+
+            row.add(bifunction.apply(buttons, i));
+
             if (i == buttons.size() - 1) {
                 keyboardRows.add(row);
             }
         }
+    }
 
-        keyboard.setKeyboard(keyboardRows);
+    private void commons(SendMessage sendMessage, ReplyKeyboard keyboard) {
+        sendMessage.setReplyMarkup(keyboard);
     }
 }
