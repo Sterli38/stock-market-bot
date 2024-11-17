@@ -9,39 +9,83 @@ import com.example.stockmarketbot.util.KeyboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.PartialBotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.example.stockmarketbot.bot.StockMarketBot.EUR;
-import static com.example.stockmarketbot.bot.StockMarketBot.RUB;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class CommandHandler {
+    private static final String START = "/start";
+    private static final String HELP = "/help";
+    private static final String GET_TRANSACTIONS_BY_FILTER = "/getTransactionsByFilter";
+    private static final String LANG = "/lang";
+    private static final String GET_BALANCE_BY_CURRENCY = "/getBalanceByCurrency";
+    public static final String EUR = "EUR";
+    public static final String RUB = "RUB"; // вынести
+    private static final String EN = "EN";
+    private static final String RU = "RU";
     private final StockMarketService stockMarketService;
     private final KeyboardService keyboardService;
     private final LanguageSettings languageSettings;
 
-    public SendMessage handleStartCommand(Long chatId, String userName) {
+    public PartialBotApiMethod<Message> handle(Update update) {
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            String message = update.getMessage().getText();
+            String username = update.getMessage().getChat().getUserName();
+            Long chatId = update.getMessage().getChatId();
+
+            return switch (message) {
+                case START -> handleStartCommand(chatId, username);
+
+                case HELP -> handleHelpCommand(chatId);
+
+                case LANG -> handleLangCommand(chatId);
+
+                case GET_TRANSACTIONS_BY_FILTER -> handleGetTransactionsByFilterCommand(chatId);
+
+                case GET_BALANCE_BY_CURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
+
+                default -> handleUnknownCommand(chatId);
+            };
+
+        } else if (update.hasCallbackQuery()) {
+            String callData = update.getCallbackQuery().getData();
+            Long chatId = update.getCallbackQuery().getMessage().getChatId();
+
+            return switch (callData) {
+                case EUR -> handleEURCommand(chatId);
+                case RUB -> handleRUBCommand(chatId);
+                case EN -> handleEnCommand(chatId);
+                case RU -> handleRuCommand(chatId);
+                default -> throw new IllegalStateException("Unexpected value: " + callData);
+            };
+        }
+        return null;
+    }
+
+    private SendMessage handleStartCommand(Long chatId, String userName) {
         String text = languageSettings.getLocalizedMessage("start.message", new Object[]{userName});
 
         return getMessage(chatId, text);
     }
 
-    public SendMessage handleHelpCommand(Long chatId) {
+    private SendMessage handleHelpCommand(Long chatId) {
         String text = languageSettings.getLocalizedMessage("help.message", null);
 
         return getMessage(chatId, text);
     }
 
-    public SendMessage handleLangCommand(Long chatId) {
+    private SendMessage handleLangCommand(Long chatId) {
         String text = languageSettings.getLocalizedMessage("lang.message", null);
         List<String> buttons = new ArrayList<>() {{
             add("EN");
@@ -55,20 +99,20 @@ public class CommandHandler {
         return sendMessage;
     }
 
-    public SendMessage handleRuCommand(Long chatId) {
+    private SendMessage handleRuCommand(Long chatId) {
         languageSettings.setLocale(new Locale("ru", "ru"));
         return getMessage(chatId, languageSettings.getLocalizedMessage("change.language.message", null));
     }
 
-    public SendMessage handleEnCommand(Long chatId) {
+    private SendMessage handleEnCommand(Long chatId) {
         languageSettings.setLocale(Locale.US);
         return getMessage(chatId, languageSettings.getLocalizedMessage("change.language.message", null));
     }
 
-    public SendMessage handleGetBalanceByCurrencyCommand(Long chatId) {
+    private SendMessage handleGetBalanceByCurrencyCommand(Long chatId) {
         String text = languageSettings.getLocalizedMessage("getBalance.message", null);
 
-        List<String> buttons = new ArrayList<>(){{
+        List<String> buttons = new ArrayList<>() {{
             add("EUR");
             add("RUB");
         }};
@@ -79,7 +123,7 @@ public class CommandHandler {
         return sendMessage;
     }
 
-    public SendMessage handleEURCommand(Long chatId) {
+    private SendMessage handleEURCommand(Long chatId) {
         GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
         getBalanceByCurrencyRequest.setParticipantId("1");
         getBalanceByCurrencyRequest.setCurrency("EUR");
@@ -88,16 +132,16 @@ public class CommandHandler {
         return getMessage(chatId, languageSettings.getLocalizedMessage("getBalance.response.message", new Object[]{EUR}) + getBalanceByCurrencyResponse.getCurrencyBalance());
     }
 
-    public SendMessage handleRUBCommand(Long chatId) {
+    private SendMessage handleRUBCommand(Long chatId) {
         GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
         getBalanceByCurrencyRequest.setParticipantId("1");
         getBalanceByCurrencyRequest.setCurrency("RUB");
         GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
 
-       return getMessage(chatId, languageSettings.getLocalizedMessage("getBalance.response.message", new Object[]{RUB}) + getBalanceByCurrencyResponse.getCurrencyBalance());
+        return getMessage(chatId, languageSettings.getLocalizedMessage("getBalance.response.message", new Object[]{RUB}) + getBalanceByCurrencyResponse.getCurrencyBalance());
     }
 
-    public SendDocument handleGetTransactionsByFilterCommand(Long chatId) {
+    private SendDocument handleGetTransactionsByFilterCommand(Long chatId) {
         GetTransactionsByFilterRequest getTransactionsByFilterRequest = new GetTransactionsByFilterRequest();
         getTransactionsByFilterRequest.setParticipantId("1");
         getTransactionsByFilterRequest.setOperationType("DEPOSITING");
@@ -105,7 +149,7 @@ public class CommandHandler {
         return getDoc(chatId, stockMarketService.getTransactionsByFilter("egor", "egor", getTransactionsByFilterRequest));
     }
 
-    public SendMessage handleUnknownCommand(Long chatId) {
+    private SendMessage handleUnknownCommand(Long chatId) {
         String text = languageSettings.getLocalizedMessage("unknown.message", null);
 
         return getMessage(chatId, text);
