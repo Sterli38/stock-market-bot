@@ -47,7 +47,7 @@ public class CommandHandler {
 
             result = switch (message) {
                 case START -> handleStartCommand(chatId, username);
-                case HELP -> handleHelpCommand(chatId);
+                case HELP-> handleHelpCommand(chatId);
                 case LANG -> handleLangCommand(chatId);
                 case GET_TRANSACTIONS_BY_FILTER -> handleGetTransactionsByFilterCommand(chatId);
                 case GET_BALANCE_BY_CURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
