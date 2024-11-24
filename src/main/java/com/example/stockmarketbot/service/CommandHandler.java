@@ -30,8 +30,8 @@ public class CommandHandler {
     private static final String GET_TRANSACTIONS_BY_FILTER = "/getTransactionsByFilter";
     private static final String LANG = "/lang";
     private static final String GET_BALANCE_BY_CURRENCY = "/getBalanceByCurrency";
-    public static final String EUR = "EUR";
-    public static final String RUB = "RUB"; // вынести
+    private static final String EUR = "EUR";
+    private static final String RUB = "RUB";
     private static final String EN = "EN";
     private static final String RU = "RU";
     private final StockMarketService stockMarketService;
@@ -39,30 +39,25 @@ public class CommandHandler {
     private final LanguageSettings languageSettings;
 
     public PartialBotApiMethod<Message> handle(Update update) {
+        PartialBotApiMethod<Message> result = null;
         if (update.hasMessage() && update.getMessage().hasText()) {
             String message = update.getMessage().getText();
             String username = update.getMessage().getChat().getUserName();
             Long chatId = update.getMessage().getChatId();
 
-            return switch (message) {
+            result = switch (message) {
                 case START -> handleStartCommand(chatId, username);
-
                 case HELP -> handleHelpCommand(chatId);
-
                 case LANG -> handleLangCommand(chatId);
-
                 case GET_TRANSACTIONS_BY_FILTER -> handleGetTransactionsByFilterCommand(chatId);
-
                 case GET_BALANCE_BY_CURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
-
                 default -> handleUnknownCommand(chatId);
             };
-
         } else if (update.hasCallbackQuery()) {
             String callData = update.getCallbackQuery().getData();
             Long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-            return switch (callData) {
+            result = switch (callData) {
                 case EUR -> handleEURCommand(chatId);
                 case RUB -> handleRUBCommand(chatId);
                 case EN -> handleEnCommand(chatId);
@@ -70,7 +65,7 @@ public class CommandHandler {
                 default -> throw new IllegalStateException("Unexpected value: " + callData);
             };
         }
-        return null;
+        return result;
     }
 
     private SendMessage handleStartCommand(Long chatId, String userName) {
