@@ -47,7 +47,7 @@ public class CommandHandler {
 
             result = switch (message) {
                 case START -> handleStartCommand(chatId, username);
-                case HELP-> handleHelpCommand(chatId);
+                case HELP -> handleHelpCommand(chatId);
                 case LANG -> handleLangCommand(chatId);
                 case GET_TRANSACTIONS_BY_FILTER -> handleGetTransactionsByFilterCommand(chatId);
                 case GET_BALANCE_BY_CURRENCY -> handleGetBalanceByCurrencyCommand(chatId);
@@ -83,8 +83,8 @@ public class CommandHandler {
     private SendMessage handleLangCommand(Long chatId) {
         String text = languageSettings.getLocalizedMessage("lang.message", null);
         List<String> buttons = new ArrayList<>() {{
-            add("EN");
-            add("RU");
+            add(EN);
+            add(RU);
         }};
 
         SendMessage sendMessage = getMessage(chatId, text);
@@ -108,8 +108,8 @@ public class CommandHandler {
         String text = languageSettings.getLocalizedMessage("getBalance.message", null);
 
         List<String> buttons = new ArrayList<>() {{
-            add("EUR");
-            add("RUB");
+            add(EUR);
+            add(RUB);
         }};
 
         SendMessage sendMessage = getMessage(chatId, text);
@@ -121,7 +121,7 @@ public class CommandHandler {
     private SendMessage handleEURCommand(Long chatId) {
         GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
         getBalanceByCurrencyRequest.setParticipantId("1");
-        getBalanceByCurrencyRequest.setCurrency("EUR");
+        getBalanceByCurrencyRequest.setCurrency(EUR);
         GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
 
         return getMessage(chatId, languageSettings.getLocalizedMessage("getBalance.response.message", new Object[]{EUR}) + getBalanceByCurrencyResponse.getCurrencyBalance());
@@ -130,7 +130,7 @@ public class CommandHandler {
     private SendMessage handleRUBCommand(Long chatId) {
         GetBalanceByCurrencyRequest getBalanceByCurrencyRequest = new GetBalanceByCurrencyRequest();
         getBalanceByCurrencyRequest.setParticipantId("1");
-        getBalanceByCurrencyRequest.setCurrency("RUB");
+        getBalanceByCurrencyRequest.setCurrency(RUB);
         GetBalanceByCurrencyResponse getBalanceByCurrencyResponse = stockMarketService.getBalanceByCurrency("egor", "egor", getBalanceByCurrencyRequest);
 
         return getMessage(chatId, languageSettings.getLocalizedMessage("getBalance.response.message", new Object[]{RUB}) + getBalanceByCurrencyResponse.getCurrencyBalance());
